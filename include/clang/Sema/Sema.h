@@ -3803,7 +3803,8 @@ public:
     CES_AllowExceptionVariables = 4,
     CES_FormerDefault = (CES_AllowParameters),
     CES_Default = (CES_AllowParameters | CES_AllowDifferentTypes),
-    CES_AsIfByStdMove = (CES_AllowParameters | CES_AllowDifferentTypes | CES_AllowExceptionVariables),
+    CES_AsIfByStdMove = (CES_AllowParameters | CES_AllowDifferentTypes |
+                         CES_AllowExceptionVariables),
   };
 
   VarDecl *getCopyElisionCandidate(QualType ReturnType, Expr *E,

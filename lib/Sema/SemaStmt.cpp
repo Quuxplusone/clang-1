@@ -3069,9 +3069,10 @@ Sema::PerformMoveOrCopyInitialization(const InitializedEntity &Entity,
         // Adding 'std::move' around a trivially copyable variable is probably
         // pointless. Don't suggest it.
       } else {
-        // The most common case for this is returning T from a function that
-        // returns Expected<T>. This is totally fine in a post-CWG1579 world,
-        // but was not fine before.
+        // Common cases for this are returning unique_ptr<Derived> from a
+        // function of return type unique_ptr<Base>, or returning T from a
+        // function of return type Expected<T>. This is totally fine in a
+        // post-CWG1579 world, but was not fine before.
         assert(ResultType);
         SmallString<32> Str;
         Str += "std::move(";
@@ -3101,10 +3102,11 @@ Sema::PerformMoveOrCopyInitialization(const InitializedEntity &Entity,
         } else {
           ExprResult FakeRes = ExprError();
           Expr *FakeValue = Value;
-          TryMoveInitialization(*this, Entity, FakeNRVOCandidate,
-                                ResultType, FakeValue, false, FakeRes);
+          TryMoveInitialization(*this, Entity, FakeNRVOCandidate, ResultType,
+                                FakeValue, false, FakeRes);
           if (!FakeRes.isInvalid()) {
-            bool IsThrow = (Entity.getKind() == InitializedEntity::EK_Exception);
+            bool IsThrow =
+                (Entity.getKind() == InitializedEntity::EK_Exception);
             SmallString<32> Str;
             Str += "std::move(";
             Str += FakeNRVOCandidate->getDeclName().getAsString();
