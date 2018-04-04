@@ -808,7 +808,8 @@ static void DiagnoseReinterpretUpDownCast(Sema &Self, const Expr *SrcExpr,
     ReinterpretDowncast
   } ReinterpretKind;
 
-  CXXBasePaths BasePaths;
+  CXXBasePaths BasePaths(CBPO_FindAmbiguities | CBPO_RecordPaths |
+                         CBPO_DetectVirtual);
 
   if (SrcRD->isDerivedFrom(DestRD, BasePaths))
     ReinterpretKind = ReinterpretUpcast;
@@ -1213,8 +1214,8 @@ TryCastResult TryLValueToRValueCast(Sema &Self, Expr *SrcExpr,
 
   if (DerivedToBase) {
     Kind = CK_DerivedToBase;
-    CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
-                       /*DetectVirtual=*/true);
+    CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
+                       CBPO_DetectVirtual);
     if (!Self.IsDerivedFrom(SrcExpr->getLocStart(), SrcExpr->getType(),
                             R->getPointeeType(), Paths))
       return TC_NotApplicable;
@@ -1314,8 +1315,8 @@ TryStaticDowncast(Sema &Self, CanQualType SrcType, CanQualType DestType,
     return TC_NotApplicable;
   }
 
-  CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
-                     /*DetectVirtual=*/true);
+  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
+                     CBPO_DetectVirtual);
   if (!Self.IsDerivedFrom(OpRange.getBegin(), DestType, SrcType, Paths)) {
     return TC_NotApplicable;
   }
@@ -1455,8 +1456,8 @@ TryStaticMemberPointerUpcast(Sema &Self, ExprResult &SrcExpr, QualType SrcType,
   // B base of D
   QualType SrcClass(SrcMemPtr->getClass(), 0);
   QualType DestClass(DestMemPtr->getClass(), 0);
-  CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
-                  /*DetectVirtual=*/true);
+  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
+                     CBPO_DetectVirtual);
   if (!Self.IsDerivedFrom(OpRange.getBegin(), SrcClass, DestClass, Paths))
     return TC_NotApplicable;
 

@@ -688,8 +688,7 @@ bool Sema::handlerCanCatch(QualType HandlerType, QualType ExceptionType) {
   //      base class of E
   if (!ExceptionType->isRecordType() || !HandlerType->isRecordType())
     return false;
-  CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
-                     /*DetectVirtual=*/false);
+  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths);
   if (!IsDerivedFrom(SourceLocation(), ExceptionType, HandlerType, Paths) ||
       Paths.isAmbiguous(Context.getCanonicalType(HandlerType)))
     return false;

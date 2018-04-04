@@ -2994,8 +2994,8 @@ bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType,
   assert(FromClass->isRecordType() && "Pointer into non-class.");
   assert(ToClass->isRecordType() && "Pointer into non-class.");
 
-  CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
-                     /*DetectVirtual=*/true);
+  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
+                     CBPO_DetectVirtual);
   bool DerivationOkay =
       IsDerivedFrom(From->getLocStart(), ToClass, FromClass, Paths);
   assert(DerivationOkay &&

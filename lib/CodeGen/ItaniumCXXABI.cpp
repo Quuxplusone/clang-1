@@ -1175,8 +1175,7 @@ static llvm::Constant *getBadCastFn(CodeGenFunction &CGF) {
 static CharUnits computeOffsetHint(ASTContext &Context,
                                    const CXXRecordDecl *Src,
                                    const CXXRecordDecl *Dst) {
-  CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
-                     /*DetectVirtual=*/false);
+  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths);
 
   // If Dst is not derived from Src we can skip the whole computation below and
   // return that Src is not a public base of Dst.  Record all inheritance paths.

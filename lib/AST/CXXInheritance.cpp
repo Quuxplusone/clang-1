@@ -83,15 +83,12 @@ void CXXBasePaths::swap(CXXBasePaths &Other) {
   Paths.swap(Other.Paths);
   ClassSubobjects.swap(Other.ClassSubobjects);
   VisitedDependentRecords.swap(Other.VisitedDependentRecords);
-  std::swap(FindAmbiguities, Other.FindAmbiguities);
-  std::swap(RecordPaths, Other.RecordPaths);
-  std::swap(DetectVirtual, Other.DetectVirtual);
+  std::swap(Options, Other.Options);
   std::swap(DetectedVirtual, Other.DetectedVirtual);
 }
 
 bool CXXRecordDecl::isDerivedFrom(const CXXRecordDecl *Base) const {
-  CXXBasePaths Paths(/*FindAmbiguities=*/false, /*RecordPaths=*/false,
-                     /*DetectVirtual=*/false);
+  CXXBasePaths Paths(CBPO_None);
   return isDerivedFrom(Base, Paths);
 }
 
@@ -115,8 +112,7 @@ bool CXXRecordDecl::isVirtuallyDerivedFrom(const CXXRecordDecl *Base) const {
   if (!getNumVBases())
     return false;
 
-  CXXBasePaths Paths(/*FindAmbiguities=*/false, /*RecordPaths=*/false,
-                     /*DetectVirtual=*/false);
+  CXXBasePaths Paths(CBPO_None);
 
   if (getCanonicalDecl() == Base->getCanonicalDecl())
     return false;
@@ -522,7 +518,8 @@ std::vector<const NamedDecl *> CXXRecordDecl::lookupDependentName(
     return Results;
   }
   // Perform lookup into our base classes.
-  CXXBasePaths Paths;
+  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
+                     CBPO_DetectVirtual);
   Paths.setOrigin(this);
   if (!lookupInBases(
           [&](const CXXBaseSpecifier *Specifier, CXXBasePath &Path) {

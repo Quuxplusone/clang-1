@@ -227,10 +227,7 @@ MemberExpr *ASTMaker::makeMemberExpression(Expr *base, ValueDecl *MemberDecl,
 
 ValueDecl *ASTMaker::findMemberField(const RecordDecl *RD, StringRef Name) {
 
-  CXXBasePaths Paths(
-      /* FindAmbiguities=*/false,
-      /* RecordPaths=*/false,
-      /* DetectVirtual=*/ false);
+  CXXBasePaths Paths(CBPO_None);
   const IdentifierInfo &II = C.Idents.get(Name);
   DeclarationName DeclName = C.DeclarationNames.getIdentifier(&II);
 

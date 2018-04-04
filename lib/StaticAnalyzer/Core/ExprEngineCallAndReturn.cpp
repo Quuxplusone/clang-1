@@ -145,8 +145,7 @@ static SVal adjustReturnValue(SVal V, QualType ExpectedTy, QualType ActualTy,
   const CXXRecordDecl *ExpectedClass = ExpectedTy->getPointeeCXXRecordDecl();
   const CXXRecordDecl *ActualClass = ActualTy->getPointeeCXXRecordDecl();
   if (ExpectedClass && ActualClass) {
-    CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
-                       /*DetectVirtual=*/false);
+    CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths);
     if (ActualClass->isDerivedFrom(ExpectedClass, Paths) &&
         !Paths.isAmbiguous(ActualTy->getCanonicalTypeUnqualified())) {
       return StoreMgr.evalDerivedToBase(V, Paths.front());
@@ -753,7 +752,7 @@ static bool hasMember(const ASTContext &Ctx, const CXXRecordDecl *RD,
   if (!RD->lookup(DeclName).empty())
     return true;
 
-  CXXBasePaths Paths(false, false, false);
+  CXXBasePaths Paths(CBPO_None);
   if (RD->lookupInBases(
           [DeclName](const CXXBaseSpecifier *Specifier, CXXBasePath &Path) {
             return CXXRecordDecl::FindOrdinaryMember(Specifier, Path, DeclName);

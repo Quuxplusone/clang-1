@@ -1234,7 +1234,8 @@ static const CXXRecordDecl *findDecomposableBaseClass(Sema &S,
     ClassWithFields = RD;
   else {
     //   ... or of ...
-    CXXBasePaths Paths;
+    CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
+                       CBPO_DetectVirtual);
     Paths.setOrigin(const_cast<CXXRecordDecl*>(RD));
     if (!RD->lookupInBases(BaseHasFields, Paths)) {
       // If no classes have fields, just decompose RD itself. (This will work
@@ -1287,7 +1288,8 @@ static const CXXRecordDecl *findDecomposableBaseClass(Sema &S,
 
   // The above search did not check whether the selected class itself has base
   // classes with fields, so check that now.
-  CXXBasePaths Paths;
+  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
+                     CBPO_DetectVirtual);
   if (ClassWithFields->lookupInBases(BaseHasFields, Paths)) {
     S.Diag(Loc, diag::err_decomp_decl_multiple_bases_with_members)
       << (ClassWithFields == RD) << RD << ClassWithFields
@@ -2431,8 +2433,8 @@ bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class,
       .getUnqualifiedType();
 
     if (IndirectBaseTypes.count(CanonicalBase)) {
-      CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
-                         /*DetectVirtual=*/true);
+      CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
+                         CBPO_DetectVirtual);
       bool found
         = Class->isDerivedFrom(CanonicalBase->getAsCXXRecordDecl(), Paths);
       assert(found);
@@ -2563,8 +2565,7 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
   // ambiguous. This is slightly more expensive than checking whether
   // the Derived to Base conversion exists, because here we need to
   // explore multiple paths to determine if there is an ambiguity.
-  CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
-                     /*DetectVirtual=*/false);
+  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths);
   bool DerivationOkay = IsDerivedFrom(Loc, Derived, Base, Paths);
   if (!DerivationOkay)
     return true;
@@ -2846,8 +2847,8 @@ void Sema::CheckShadowInheritedFields(const SourceLocation &Loc,
     return false;
   };
 
-  CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
-                     /*DetectVirtual=*/true);
+  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
+                     CBPO_DetectVirtual);
   if (!RD->lookupInBases(FieldShadowed, Paths))
     return;
 
@@ -3645,8 +3646,7 @@ static bool FindBaseInitializer(Sema &SemaRef,
   if (!DirectBaseSpec || !DirectBaseSpec->isVirtual()) {
     // We haven't found a base yet; search the class hierarchy for a
     // virtual base class.
-    CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
-                       /*DetectVirtual=*/false);
+    CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths);
     if (SemaRef.IsDerivedFrom(ClassDecl->getLocation(),
                               SemaRef.Context.getTypeDeclType(ClassDecl),
                               BaseType, Paths)) {
@@ -7656,9 +7656,7 @@ void Sema::FindHiddenVirtualMethods(CXXMethodDecl *MD,
   if (!MD->getDeclName().isIdentifier())
     return;
 
-  CXXBasePaths Paths(/*FindAmbiguities=*/true, // true to look in all bases.
-                     /*bool RecordPaths=*/false,
-                     /*bool DetectVirtual=*/false);
+  CXXBasePaths Paths(CBPO_FindAmbiguities);
   FindHiddenVirtualMethod FHVM;
   FHVM.Method = MD;
   FHVM.S = this;

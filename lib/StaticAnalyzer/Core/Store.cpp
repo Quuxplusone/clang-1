@@ -334,8 +334,7 @@ SVal StoreManager::attemptDownCast(SVal Base, QualType TargetType,
     if (!TargetType->isVoidType() && MRClass->hasDefinition()) {
       // Static upcasts are marked as DerivedToBase casts by Sema, so this will
       // only happen when multiple or virtual inheritance is involved.
-      CXXBasePaths Paths(/*FindAmbiguities=*/false, /*RecordPaths=*/true,
-                         /*DetectVirtual=*/false);
+      CXXBasePaths Paths(CBPO_RecordPaths);
       if (MRClass->isDerivedFrom(TargetClass, Paths))
         return evalDerivedToBase(loc::MemRegionVal(MR), Paths.front());
     }

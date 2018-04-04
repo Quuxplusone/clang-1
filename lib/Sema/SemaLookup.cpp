@@ -636,7 +636,8 @@ void LookupResult::addDeclsFromBasePaths(const CXXBasePaths &P) {
 }
 
 void LookupResult::setAmbiguousBaseSubobjects(CXXBasePaths &P) {
-  Paths = new CXXBasePaths;
+  Paths = new CXXBasePaths(CBPO_FindAmbiguities | CBPO_RecordPaths |
+                           CBPO_DetectVirtual);
   Paths->swap(P);
   addDeclsFromBasePaths(*Paths);
   resolveKind();
@@ -644,7 +645,8 @@ void LookupResult::setAmbiguousBaseSubobjects(CXXBasePaths &P) {
 }
 
 void LookupResult::setAmbiguousBaseSubobjectTypes(CXXBasePaths &P) {
-  Paths = new CXXBasePaths;
+  Paths = new CXXBasePaths(CBPO_FindAmbiguities | CBPO_RecordPaths |
+                           CBPO_DetectVirtual);
   Paths->swap(P);
   addDeclsFromBasePaths(*Paths);
   resolveKind();
@@ -2080,7 +2082,8 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
   }
 
   // Perform lookup into our base classes.
-  CXXBasePaths Paths;
+  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
+                     CBPO_DetectVirtual);
   Paths.setOrigin(LookupRec);
 
   // Look for this member in our base classes

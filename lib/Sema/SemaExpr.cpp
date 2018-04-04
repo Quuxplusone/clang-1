@@ -12766,7 +12766,8 @@ ExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
 
     // If the member was found in a base class, introduce OffsetOfNodes for
     // the base class indirections.
-    CXXBasePaths Paths;
+    CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
+                       CBPO_DetectVirtual);
     if (IsDerivedFrom(OC.LocStart, CurrentType, Context.getTypeDeclType(Parent),
                       Paths)) {
       if (Paths.getDetectedVirtual()) {

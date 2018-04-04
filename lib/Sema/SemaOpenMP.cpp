@@ -10004,8 +10004,7 @@ buildDeclareReductionRef(Sema &SemaRef, SourceLocation Loc, SourceRange Range,
               return D;
             return nullptr;
           })) {
-    CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
-                       /*DetectVirtual=*/false);
+    CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths);
     if (SemaRef.IsDerivedFrom(Loc, Ty, VD->getType(), Paths)) {
       if (!Paths.isAmbiguous(SemaRef.Context.getCanonicalType(
               VD->getType().getUnqualifiedType()))) {
