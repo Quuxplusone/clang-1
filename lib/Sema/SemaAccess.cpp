@@ -1184,8 +1184,7 @@ static void DiagnoseAccessPath(Sema &S,
     }
   }
 
-  CXXBasePaths paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
-                     CBPO_DetectVirtual);
+  CXXBasePaths paths(CBPO_FindAmbiguities | CBPO_RecordPaths);
   CXXBasePath &path = *FindBestPath(S, EC, entity, accessSoFar, paths);
   assert(path.Access != AS_public);
 
@@ -1378,8 +1377,7 @@ static AccessResult IsAccessible(Sema &S,
   assert(Entity.getDeclaringClass() != NamingClass);
 
   // Append the declaration's access if applicable.
-  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
-                     CBPO_DetectVirtual);
+  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths);
   CXXBasePath *Path = FindBestPath(S, EC, Entity, FinalAccess, Paths);
   if (!Path)
     return AR_dependent;

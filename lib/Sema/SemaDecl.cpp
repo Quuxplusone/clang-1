@@ -7581,8 +7581,7 @@ static void ReportOverrides(Sema& S, unsigned DiagID, const CXXMethodDecl *MD,
 /// and if so, check that it's a valid override and remember it.
 bool Sema::AddOverriddenMethods(CXXRecordDecl *DC, CXXMethodDecl *MD) {
   // Look for methods in base classes that this method might override.
-  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
-                     CBPO_DetectVirtual);
+  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths);
   FindOverriddenMethod FOM;
   FOM.Method = MD;
   FOM.S = this;

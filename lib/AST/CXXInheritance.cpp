@@ -518,8 +518,7 @@ std::vector<const NamedDecl *> CXXRecordDecl::lookupDependentName(
     return Results;
   }
   // Perform lookup into our base classes.
-  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
-                     CBPO_DetectVirtual);
+  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths);
   Paths.setOrigin(this);
   if (!lookupInBases(
           [&](const CXXBaseSpecifier *Specifier, CXXBasePath &Path) {

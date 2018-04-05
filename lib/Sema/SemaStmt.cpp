@@ -3904,8 +3904,7 @@ StmtResult Sema::ActOnCXXTryBlock(SourceLocation TryLoc, Stmt *TryBlock,
       // qualification as the original type we are basing off of. This allows
       // comparison against the handler type using the same top-level pointer
       // as the original type.
-      CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
-                         CBPO_DetectVirtual);
+      CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths);
       Paths.setOrigin(RD);
       CatchTypePublicBases CTPB(Context, HandledTypes, HandlerCHT.isPointer());
       if (RD->lookupInBases(CTPB, Paths)) {

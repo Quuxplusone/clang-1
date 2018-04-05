@@ -1234,8 +1234,7 @@ static const CXXRecordDecl *findDecomposableBaseClass(Sema &S,
     ClassWithFields = RD;
   else {
     //   ... or of ...
-    CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
-                       CBPO_DetectVirtual);
+    CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths);
     Paths.setOrigin(const_cast<CXXRecordDecl*>(RD));
     if (!RD->lookupInBases(BaseHasFields, Paths)) {
       // If no classes have fields, just decompose RD itself. (This will work
@@ -1288,8 +1287,7 @@ static const CXXRecordDecl *findDecomposableBaseClass(Sema &S,
 
   // The above search did not check whether the selected class itself has base
   // classes with fields, so check that now.
-  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
-                     CBPO_DetectVirtual);
+  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths);
   if (ClassWithFields->lookupInBases(BaseHasFields, Paths)) {
     S.Diag(Loc, diag::err_decomp_decl_multiple_bases_with_members)
       << (ClassWithFields == RD) << RD << ClassWithFields
@@ -2433,8 +2431,7 @@ bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class,
       .getUnqualifiedType();
 
     if (IndirectBaseTypes.count(CanonicalBase)) {
-      CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
-                         CBPO_DetectVirtual);
+      CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths);
       bool found
         = Class->isDerivedFrom(CanonicalBase->getAsCXXRecordDecl(), Paths);
       assert(found);
@@ -2847,8 +2844,7 @@ void Sema::CheckShadowInheritedFields(const SourceLocation &Loc,
     return false;
   };
 
-  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
-                     CBPO_DetectVirtual);
+  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths);
   if (!RD->lookupInBases(FieldShadowed, Paths))
     return;
 

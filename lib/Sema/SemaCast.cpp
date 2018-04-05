@@ -808,8 +808,7 @@ static void DiagnoseReinterpretUpDownCast(Sema &Self, const Expr *SrcExpr,
     ReinterpretDowncast
   } ReinterpretKind;
 
-  CXXBasePaths BasePaths(CBPO_FindAmbiguities | CBPO_RecordPaths |
-                         CBPO_DetectVirtual);
+  CXXBasePaths BasePaths(CBPO_FindAmbiguities | CBPO_RecordPaths);
 
   if (SrcRD->isDerivedFrom(DestRD, BasePaths))
     ReinterpretKind = ReinterpretUpcast;
@@ -1214,8 +1213,7 @@ TryCastResult TryLValueToRValueCast(Sema &Self, Expr *SrcExpr,
 
   if (DerivedToBase) {
     Kind = CK_DerivedToBase;
-    CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
-                       CBPO_DetectVirtual);
+    CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths);
     if (!Self.IsDerivedFrom(SrcExpr->getLocStart(), SrcExpr->getType(),
                             R->getPointeeType(), Paths))
       return TC_NotApplicable;

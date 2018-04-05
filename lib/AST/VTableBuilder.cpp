@@ -1201,8 +1201,7 @@ BaseOffset ItaniumVTableBuilder::ComputeThisAdjustmentBaseOffset(
   const CXXRecordDecl *BaseRD = Base.getBase();
   const CXXRecordDecl *DerivedRD = Derived.getBase();
   
-  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
-                     CBPO_DetectVirtual);
+  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths);
 
   if (!DerivedRD->isDerivedFrom(BaseRD, Paths))
     llvm_unreachable("Class must be derived from the passed in base class!");
@@ -2642,8 +2641,7 @@ VFTableBuilder::ComputeThisOffset(FinalOverriders::OverriderInfo Overrider) {
   if (Bases.size() == 0)
     return Overrider.Offset;
 
-  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths |
-                     CBPO_DetectVirtual);
+  CXXBasePaths Paths(CBPO_FindAmbiguities | CBPO_RecordPaths);
   Overrider.Method->getParent()->lookupInBases(
       [&Bases](const CXXBaseSpecifier *Specifier, CXXBasePath &) {
         return Bases.count(Specifier->getType()->getAsCXXRecordDecl());
