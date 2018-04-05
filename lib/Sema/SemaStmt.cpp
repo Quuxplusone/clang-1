@@ -3073,7 +3073,7 @@ Sema::PerformMoveOrCopyInitialization(const InitializedEntity &Entity,
         // function of return type unique_ptr<Base>, or returning T from a
         // function of return type Expected<T>. This is totally fine in a
         // post-CWG1579 world, but was not fine before.
-        assert(ResultType);
+        assert(!ResultType.isNull());
         SmallString<32> Str;
         Str += "std::move(";
         Str += NRVOCandidate->getDeclName().getAsString();

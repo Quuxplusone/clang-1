@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -Wreturn-std-move -Wreturn-std-move-in-cxx11 -std=c++11 -verify %s
-// RUN: %clang_cc1 -fsyntax-only -Wreturn-std-move -Wreturn-std-move-in-cxx11 -std=c++11 -fdiagnostics-parseable-fixits %s 2>&1 | FileCheck %s
+// RUN: %clang_cc1 -fsyntax-only -fcxx-exceptions -Wreturn-std-move -Wreturn-std-move-in-c++11 -std=c++14 -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fcxx-exceptions -Wreturn-std-move -Wreturn-std-move-in-c++11 -std=c++14 -fdiagnostics-parseable-fixits %s 2>&1 | FileCheck %s
 
 // definitions for std::move
 namespace std {
