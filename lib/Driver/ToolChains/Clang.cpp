@@ -4173,7 +4173,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   if (Args.hasFlag(options::OPT_fp1008, options::OPT_fno_p1008,
-                   false) &&
+                   true) &&
       types::isCXX(InputType)) {
     CmdArgs.push_back("-fp1008");
   }
