@@ -99,6 +99,7 @@ def MissingNoEscape : DiagGroup<"missing-noescape">;
 def DeleteIncomplete : DiagGroup<"delete-incomplete">;
 def DeleteNonVirtualDtor : DiagGroup<"delete-non-virtual-dtor">;
 def AbstractFinalClass : DiagGroup<"abstract-final-class">;
+def AggregateCtors : DiagGroup<"aggregate-ctors">;
 
 def CXX11CompatDeprecatedWritableStr :
   DiagGroup<"c++11-compat-deprecated-writable-strings">;

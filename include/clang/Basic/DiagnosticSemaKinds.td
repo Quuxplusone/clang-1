@@ -6510,6 +6510,11 @@ def note_conflicting_try_here : Note<
 def warn_jump_out_of_seh_finally : Warning<
   "jump out of __finally block has undefined behavior">,
   InGroup<DiagGroup<"jump-seh-finally">>;
+def warn_aggregate_with_user_declared_constructor : Warning<
+  "P1008 proposes that this aggregate type with user-declared constructor "
+  "should become a non-aggregate in C++2a">,
+  InGroup<AggregateCtors>, DefaultIgnore;
+
 def warn_non_virtual_dtor : Warning<
   "%0 has virtual functions but non-virtual destructor">,
   InGroup<NonVirtualDtor>, DefaultIgnore;

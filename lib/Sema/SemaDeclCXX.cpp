@@ -5985,6 +5985,10 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
            diag::warn_non_virtual_dtor) << Context.getRecordType(Record);
   }
 
+  if (Record->isAggregate() && Record->hasUserDeclaredConstructor()) {
+    Diag(Record->getLocation(), diag::warn_aggregate_with_user_declared_constructor);
+  }
+
   if (Record->isAbstract()) {
     if (FinalAttr *FA = Record->getAttr<FinalAttr>()) {
       Diag(Record->getLocation(), diag::warn_abstract_final_class)
