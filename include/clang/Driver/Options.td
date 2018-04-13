@@ -655,6 +655,10 @@ def fcoroutines_ts : Flag <["-"], "fcoroutines-ts">, Group<f_Group>,
 def fno_coroutines_ts : Flag <["-"], "fno-coroutines-ts">, Group<f_Group>,
   Flags<[DriverOption]>;
 
+def fp1008 : Flag<["-"], "fp1008">, Group<f_Group>, Flags<[DriverOption, CC1Option]>,
+  HelpText<"Make types with user-declared constructors into non-aggregates">;
+def fno_p1008 : Flag<["-"], "fno-p1008">, Group<f_Group>, Flags<[DriverOption, CC1Option]>;
+
 def fembed_bitcode_EQ : Joined<["-"], "fembed-bitcode=">,
     Group<f_Group>, Flags<[DriverOption, CC1Option]>, MetaVarName<"<option>">,
     HelpText<"Embed LLVM bitcode (option: off, all, bitcode, marker)">;

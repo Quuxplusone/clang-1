@@ -4172,6 +4172,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fcoroutines-ts");
   }
 
+  if (Args.hasFlag(options::OPT_fp1008, options::OPT_fno_p1008,
+                   false) &&
+      types::isCXX(InputType)) {
+    CmdArgs.push_back("-fp1008");
+  }
+
   Args.AddLastArg(CmdArgs, options::OPT_fdouble_square_bracket_attributes,
                   options::OPT_fno_double_square_bracket_attributes);
 

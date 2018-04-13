@@ -697,6 +697,12 @@ void CXXRecordDecl::addedMember(Decl *D) {
       // Note that we have a user-declared constructor.
       data().UserDeclaredConstructor = true;
 
+      // P1008:
+      //   An aggregate is an array or a class with no user-DECLARED, explicit, or
+      //   inherited constructors.
+      if (getASTContext().getLangOpts().P1008)
+        data().Aggregate = false;
+
       // C++ [class]p4:
       //   A POD-struct is an aggregate class [...]
       // Since the POD bit is meant to be C++03 POD-ness, clear it even if the
