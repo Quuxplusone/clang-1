@@ -73,7 +73,7 @@ void LazyASTUnresolvedSet::getFromExternalSource(ASTContext &C) const {
 
 CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     : UserDeclaredConstructor(false), UserDeclaredSpecialMembers(0),
-      Aggregate(true), PlainOldData(true), Empty(true), Polymorphic(false),
+      Aggregate(true), OldAggregate(true), PlainOldData(true), Empty(true), Polymorphic(false),
       Abstract(false), IsStandardLayout(true), IsCXX11StandardLayout(true),
       HasBasesWithFields(false), HasBasesWithNonStaticDataMembers(false),
       HasPrivateFields(false), HasProtectedFields(false),
@@ -194,6 +194,7 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
       // C++ [dcl.init.aggr]p1:
       //   An aggregate is [...] a class with [...] no base classes [...].
       data().Aggregate = false;
+      data().OldAggregate = false;
     }
 
     // C++ [class]p4:
@@ -253,8 +254,10 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
 
     // C++1z [dcl.init.agg]p1:
     //   An aggregate is a class with [...] no private or protected base classes
-    if (Base->getAccessSpecifier() != AS_public)
+    if (Base->getAccessSpecifier() != AS_public) {
       data().Aggregate = false;
+      data().OldAggregate = false;
+    }
 
     // C++ [class.virtual]p1:
     //   A class that declares or inherits a virtual function is called a 
@@ -292,6 +295,7 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
         // C++1z [dcl.init.agg]p1:
         //   An aggregate is a class with [...] no virtual base classes
         data().Aggregate = false;
+        data().OldAggregate = false;
       }
     }
 
@@ -308,6 +312,7 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
       // C++1z [dcl.init.agg]p1:
       //   An aggregate is a class with [...] no virtual base classes
       data().Aggregate = false;
+      data().OldAggregate = false;
 
       // C++11 [class.ctor]p5, C++11 [class.copy]p12, C++11 [class.copy]p25:
       //   A [default constructor, copy/move constructor, or copy/move assignment
@@ -653,6 +658,7 @@ void CXXRecordDecl::addedMember(Decl *D) {
       // C++ [dcl.init.aggr]p1:
       //   An aggregate is an array or a class with [...] no virtual functions.
       data().Aggregate = false;
+      data().OldAggregate = false;
       
       // C++ [class]p4:
       //   A POD-struct is an aggregate class...
@@ -735,8 +741,10 @@ void CXXRecordDecl::addedMember(Decl *D) {
     // C++11 [dcl.init.aggr]p1: DR1518
     //   An aggregate is an array or a class with no user-provided, explicit, or
     //   inherited constructors
-    if (Constructor->isUserProvided() || Constructor->isExplicit())
+    if (Constructor->isUserProvided() || Constructor->isExplicit()) {
       data().Aggregate = false;
+      data().OldAggregate = false;
+    }
   }
 
   // Handle constructors, including those inherited from base classes.
@@ -903,6 +911,7 @@ void CXXRecordDecl::addedMember(Decl *D) {
     // A POD must be an aggregate.    
     if (D->getAccess() == AS_private || D->getAccess() == AS_protected) {
       data().Aggregate = false;
+      data().OldAggregate = false;
       data().PlainOldData = false;
     }
 
@@ -1022,8 +1031,10 @@ void CXXRecordDecl::addedMember(Decl *D) {
       //   brace-or-equal-initializers for non-static data members.
       //
       // This rule was removed in C++14.
-      if (!getASTContext().getLangOpts().CPlusPlus14)
+      if (!getASTContext().getLangOpts().CPlusPlus14) {
+        data().OldAggregate = false;
         data().Aggregate = false;
+      }
 
       // C++11 [class]p10:
       //   A POD struct is [...] a trivial class.
@@ -1254,6 +1265,7 @@ void CXXRecordDecl::addedMember(Decl *D) {
       // C++1z [dcl.init.aggr]p1:
       //  An aggregate is [...] a class [...] with no inherited constructors
       data().Aggregate = false;
+      data().OldAggregate = false;
     }
 
     if (Using->getDeclName().getCXXOverloadedOperator() == OO_Equal)

@@ -328,8 +328,11 @@ class CXXRecordDecl : public RecordDecl {
     /// \brief The user-declared special members which this class has.
     unsigned UserDeclaredSpecialMembers : 6;
 
-    /// \brief True when this class is an aggregate.
+    /// \brief True when this class is an aggregate (maybe under P1008 rules).
     unsigned Aggregate : 1;
+
+    /// \brief True when this class is an aggregate (under standard rules).
+    unsigned OldAggregate : 1;
 
     /// \brief True when this class is a POD-type.
     unsigned PlainOldData : 1;
@@ -1257,6 +1260,11 @@ public:
   /// or protected non-static data members, no base classes, and no virtual
   /// functions (C++ [dcl.init.aggr]p1).
   bool isAggregate() const { return data().Aggregate; }
+
+  /// Determine whether this class would be an aggregate according to
+  /// the standard rules, for diagnostic purposes
+  /// (as opposed to the above, which may be affected by "-fp1008").
+  bool isOldAggregate() const { return data().OldAggregate; }
 
   /// \brief Whether this class has any in-class initializers
   /// for non-static data members (including those in anonymous unions or
