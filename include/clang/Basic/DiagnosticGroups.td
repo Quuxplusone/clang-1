@@ -737,6 +737,7 @@ def Move : DiagGroup<"move", [
   ]>;
 
 def Extra : DiagGroup<"extra", [
+    AggregateCtors,
     MissingFieldInitializers,
     IgnoredQualifiers,
     InitializerOverrides,
