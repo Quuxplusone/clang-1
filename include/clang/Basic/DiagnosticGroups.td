@@ -9,6 +9,7 @@
 
 def ImplicitFunctionDeclare : DiagGroup<"implicit-function-declaration">;
 def ImplicitInt : DiagGroup<"implicit-int">;
+def ImplicitlyDeclaredStruct : DiagGroup<"implicitly-declared-struct">;
 
 // Aggregation warning settings.
 def Implicit : DiagGroup<"implicit", [
@@ -753,6 +754,7 @@ def Most : DiagGroup<"most", [
     ForLoopAnalysis,
     Format,
     Implicit,
+    ImplicitlyDeclaredStruct,
     InfiniteRecursion,
     MismatchedTags,
     MissingBraces,

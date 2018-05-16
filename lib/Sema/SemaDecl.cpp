@@ -14327,9 +14327,15 @@ CreateNewDecl:
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
     // struct X { int A; } D;    D should chain to X.
     if (getLangOpts().CPlusPlus) {
+
       // FIXME: Look for a way to use RecordDecl for simple structs.
       New = CXXRecordDecl::Create(Context, Kind, SearchDC, KWLoc, Loc, Name,
                                   cast_or_null<CXXRecordDecl>(PrevDecl));
+
+      if (!PrevDecl && TUK == TUK_Reference) {
+        Diag(Loc, diag::warn_implicitly_declared_struct)
+            << New;
+      }
 
       if (isStdBadAlloc && (!StdBadAlloc || getStdBadAlloc()->isImplicit()))
         StdBadAlloc = cast<CXXRecordDecl>(New);

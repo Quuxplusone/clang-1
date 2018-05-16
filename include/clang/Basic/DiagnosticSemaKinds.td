@@ -8344,6 +8344,9 @@ def ext_missing_declspec : ExtWarn<
 def ext_missing_type_specifier : ExtWarn<
   "type specifier missing, defaults to 'int'">,
   InGroup<ImplicitInt>;
+def warn_implicitly_declared_struct : Warning<
+  "struct type %0 is being implicitly declared">,
+  InGroup<ImplicitlyDeclaredStruct>;
 def err_decimal_unsupported : Error<
   "GNU decimal type extension not supported">;
 def err_missing_type_specifier : Error<
