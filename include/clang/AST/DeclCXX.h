@@ -424,6 +424,16 @@ class CXXRecordDecl : public RecordDecl {
     /// SMF_MoveConstructor, and SMF_Destructor are meaningful here.
     unsigned DeclaredNonTrivialSpecialMembersForCall : 6;
 
+    /// True when this class's bases and fields are all trivially relocatable
+    /// or references, and the class itself has a defaulted move constructor
+    /// and a defaulted destructor.
+    unsigned IsNaturallyTriviallyRelocatable : 1;
+
+    /// True when this class has a base or field which is not trivially
+    /// relocatable. This negates the effect of the
+    /// [[clang::maybe_trivially_relocatable]] attribute.
+    unsigned HasNonTriviallyRelocatableSubobject : 1;
+
     /// True when this class has a destructor with no semantic effect.
     unsigned HasIrrelevantDestructor : 1;
 
@@ -1463,6 +1473,27 @@ public:
   void setHasTrivialSpecialMemberForCall() {
     data().HasTrivialSpecialMembersForCall =
         (SMF_CopyConstructor | SMF_MoveConstructor | SMF_Destructor);
+  }
+
+  /// Determine whether this class is trivially relocatable
+  bool isTriviallyRelocatable() const {
+    return (
+        data().IsNaturallyTriviallyRelocatable ||
+        hasAttr<TriviallyRelocatableAttr>() ||
+        (hasAttr<MaybeTriviallyRelocatableAttr>() && !data().HasNonTriviallyRelocatableSubobject)
+    );
+  }
+
+  void setIsNotNaturallyTriviallyRelocatable() {
+    data().IsNaturallyTriviallyRelocatable = false;
+  }
+
+  bool hasNonTriviallyRelocatableSubobject() const {
+    return data().HasNonTriviallyRelocatableSubobject;
+  }
+
+  void setHasNonTriviallyRelocatableSubobject() {
+    data().HasNonTriviallyRelocatableSubobject = true;
   }
 
   /// Determine whether declaring a const variable with this type is ok

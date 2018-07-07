@@ -1874,6 +1874,10 @@ Error ASTNodeImporter::ImportDefinition(
       = FromData.DefaultedMoveAssignmentIsDeleted;
     ToData.DefaultedDestructorIsDeleted = FromData.DefaultedDestructorIsDeleted;
     ToData.HasTrivialSpecialMembers = FromData.HasTrivialSpecialMembers;
+    ToData.IsNaturallyTriviallyRelocatable
+      = FromData.IsNaturallyTriviallyRelocatable;
+    ToData.HasNonTriviallyRelocatableSubobject
+      = FromData.HasNonTriviallyRelocatableSubobject;
     ToData.HasIrrelevantDestructor = FromData.HasIrrelevantDestructor;
     ToData.HasConstexprNonCopyMoveConstructor
       = FromData.HasConstexprNonCopyMoveConstructor;
