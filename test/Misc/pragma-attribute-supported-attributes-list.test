@@ -135,6 +135,7 @@
 // CHECK-NEXT: Target (SubjectMatchRule_function)
 // CHECK-NEXT: TestTypestate (SubjectMatchRule_function_is_member)
 // CHECK-NEXT: TrivialABI (SubjectMatchRule_record)
+// CHECK-NEXT: TriviallyRelocatable (SubjectMatchRule_record)
 // CHECK-NEXT: VecReturn (SubjectMatchRule_record)
 // CHECK-NEXT: VecTypeHint (SubjectMatchRule_function)
 // CHECK-NEXT: WarnUnused (SubjectMatchRule_record)

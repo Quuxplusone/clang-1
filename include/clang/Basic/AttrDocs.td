@@ -2586,6 +2586,16 @@ Attribute ``trivial_abi`` has no effect in the following cases:
   }];
 }
 
+def TriviallyRelocatableDocs : Documentation {
+  let Category = DocCatVariable;
+  let Content = [{
+A class type declared as ``[[trivially_relocatable]]`` warrants to
+the compiler that moving an object of that type, and then destroying the
+source object, is functionally equivalent to copying the underlying bytes
+and then dropping the source object on the floor.
+  }];
+}
+
 def MSInheritanceDocs : Documentation {
   let Category = DocCatDecl;
   let Heading = "__single_inhertiance, __multiple_inheritance, __virtual_inheritance";

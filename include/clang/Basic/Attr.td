@@ -2222,6 +2222,14 @@ def ObjCRequiresPropertyDefs : InheritableAttr {
   let Documentation = [Undocumented];
 }
 
+def TriviallyRelocatable : InheritableAttr {
+  let Spellings = [CXX11<"", "trivially_relocatable", 200809>,
+                   CXX11<"clang", "trivially_relocatable">];
+  let Subjects = SubjectList<[CXXRecord]>;
+  let Documentation = [TriviallyRelocatableDocs];
+  let LangOpts = [CPlusPlus];
+}
+
 def Unused : InheritableAttr {
   let Spellings = [CXX11<"", "maybe_unused", 201603>, GCC<"unused">,
                    C2x<"", "maybe_unused">];

@@ -1109,6 +1109,10 @@ The following type trait primitives are supported by Clang:
   ``argtypes...`` such that no non-trivial functions are called as part of
   that initialization.  This trait is required to implement the C++11 standard
   library.
+* ``__is_trivially_relocatable`` (Clang): Determines whether moving an object
+  of type ``type``, and then destroying the source object, is functionally
+  equivalent to copying the underlying bytes and then dropping the source object
+  on the floor.
 * ``__is_destructible`` (MSVC 2013)
 * ``__is_nothrow_destructible`` (MSVC 2013)
 * ``__is_nothrow_assignable`` (MSVC 2013, clang)

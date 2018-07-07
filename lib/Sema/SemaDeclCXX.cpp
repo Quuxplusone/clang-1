@@ -6135,6 +6135,21 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
         Record->setTrivialForCallFlags(M);
       }
 
+      // A move-constructible, destructible object type T is a
+      // trivially relocatable type if it ...
+      if ((CSM == CXXMoveConstructor || CSM == CXXDestructor) &&
+          (M->isUserProvided() || M->isDeleted())) {
+        // - has either a defaulted, non-deleted move constructor or no
+        // move constructor and a defaulted, non-deleted copy constructor,
+        // - has a defaulted, non-deleted destructor,
+        Record->setIsNotNaturallyTriviallyRelocatable();
+      } else if (CSM == CXXDestructor && M->isVirtual()) {
+        // - either is final, or has a final destructor,
+        // or has a non-virtual destructor ...
+        if (!M->hasAttr<FinalAttr>() && !Record->hasAttr<FinalAttr>())
+          Record->setIsNotNaturallyTriviallyRelocatable();
+      }
+
       if (!M->isInvalidDecl() && M->isExplicitlyDefaulted() &&
           M->hasAttr<DLLExportAttr>()) {
         if (getLangOpts().isCompatibleWithMSVC(LangOptions::MSVC2015) &&
@@ -6202,6 +6217,51 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
     // If we want to emit all the vtables, we need to mark it as used.  This
     // is especially required for cases like vtable assumption loads.
     MarkVTableUsed(Record->getInnerLocStart(), Record);
+  }
+
+  if (getLangOpts().CPlusPlus11 && Record->isTriviallyRelocatable() &&
+      !Record->isDependentContext()) {
+    if (!Record->needsImplicitMoveConstructor()) {
+      // Check that the constructor used for move-construction is defaulted
+      // and non-deleted.
+      SpecialMemberOverloadResult SMOR = LookupSpecialMember(
+          Record, CXXMoveConstructor, false, false, false, false, false);
+      if (SMOR.getKind() != SpecialMemberOverloadResult::Success ||
+          !SMOR.getMethod()->isDefaulted())
+        Record->setIsNotNaturallyTriviallyRelocatable();
+    }
+  }
+
+  if (getLangOpts().CPlusPlus11 &&
+      Record->hasAttr<TriviallyRelocatableAttr>()) {
+    if (!Record->isDependentContext()) {
+      // Check that the destructor is non-deleted.
+      SpecialMemberOverloadResult SMOR = LookupSpecialMember(
+          Record, CXXDestructor, false, false, false, false, false);
+      if (SMOR.getKind() != SpecialMemberOverloadResult::Success) {
+        Record->dropAttr<TriviallyRelocatableAttr>();
+        if (!isTemplateInstantiation(Record->getTemplateSpecializationKind())) {
+          Diag(Record->getLocation(),
+               diag::err_trivially_relocatable_class_is_not_relocatable)
+              << Record->getCanonicalDecl()->getTagKind()
+              << Context.getRecordType(Record) << true;
+        }
+      } else {
+        // Check that the constructor used for move-construction is non-deleted.
+        SMOR = LookupSpecialMember(Record, CXXMoveConstructor, false, false,
+                                   false, false, false);
+        if (SMOR.getKind() != SpecialMemberOverloadResult::Success) {
+          Record->dropAttr<TriviallyRelocatableAttr>();
+          if (!isTemplateInstantiation(
+                  Record->getTemplateSpecializationKind())) {
+            Diag(Record->getLocation(),
+                 diag::err_trivially_relocatable_class_is_not_relocatable)
+                << Record->getCanonicalDecl()->getTagKind()
+                << Context.getRecordType(Record) << false;
+          }
+        }
+      }
+    }
   }
 }
 

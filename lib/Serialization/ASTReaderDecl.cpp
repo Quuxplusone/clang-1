@@ -1685,6 +1685,7 @@ void ASTDeclReader::ReadCXXDefinitionData(
   Data.HasTrivialSpecialMembersForCall = Record.readInt();
   Data.DeclaredNonTrivialSpecialMembers = Record.readInt();
   Data.DeclaredNonTrivialSpecialMembersForCall = Record.readInt();
+  Data.IsNaturallyTriviallyRelocatable = Record.readInt();
   Data.HasIrrelevantDestructor = Record.readInt();
   Data.HasConstexprNonCopyMoveConstructor = Record.readInt();
   Data.HasDefaultedDefaultConstructor = Record.readInt();
@@ -1826,6 +1827,7 @@ void ASTDeclReader::MergeDefinitionData(
   OR_FIELD(HasTrivialSpecialMembersForCall)
   OR_FIELD(DeclaredNonTrivialSpecialMembers)
   OR_FIELD(DeclaredNonTrivialSpecialMembersForCall)
+  MATCH_FIELD(IsNaturallyTriviallyRelocatable)
   MATCH_FIELD(HasIrrelevantDestructor)
   OR_FIELD(HasConstexprNonCopyMoveConstructor)
   OR_FIELD(HasDefaultedDefaultConstructor)

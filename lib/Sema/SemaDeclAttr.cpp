@@ -6068,6 +6068,24 @@ static void handleLayoutVersion(Sema &S, Decl *D, const ParsedAttr &AL) {
                                    AL.getAttributeSpellingListIndex()));
 }
 
+template<class AttrType>
+static void checkAttributeNotOnFirstDecl(Sema &S, Decl *D, const ParsedAttr &AL) {
+  Decl *FirstD = D->getCanonicalDecl();
+  if (FirstD != D && !FirstD->hasAttr<AttrType>()) {
+    NamedDecl *ND = dyn_cast<NamedDecl>(D);
+    S.Diag(AL.getLoc(), diag::err_attribute_missing_on_first_decl)
+      << (ND ? ND->getDeclName().getAsString() : "<unnamed>") << AL.getName();
+    S.Diag(FirstD->getLocation(), diag::note_attribute_missing_first_decl)
+      << AL.getName()
+      << FirstD->getSourceRange();
+  }
+}
+
+static void handleTriviallyRelocatableAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
+  checkAttributeNotOnFirstDecl<TriviallyRelocatableAttr>(S, D, AL);
+  handleSimpleAttribute<TriviallyRelocatableAttr>(S, D, AL);
+}
+
 DLLImportAttr *Sema::mergeDLLImportAttr(Decl *D, SourceRange Range,
                                         unsigned AttrSpellingListIndex) {
   if (D->hasAttr<DLLExportAttr>()) {
@@ -7131,6 +7149,9 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     break;
   case ParsedAttr::AT_TrivialABI:
     handleSimpleAttribute<TrivialABIAttr>(S, D, AL);
+    break;
+  case ParsedAttr::AT_TriviallyRelocatable:
+    handleTriviallyRelocatableAttr(S, D, AL);
     break;
   case ParsedAttr::AT_MSNoVTable:
     handleSimpleAttribute<MSNoVTableAttr>(S, D, AL);
