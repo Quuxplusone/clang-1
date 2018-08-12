@@ -757,6 +757,10 @@ class Sema;
     /// Viable - True to indicate that this overload candidate is viable.
     bool Viable;
 
+    /// IsFromTemplateArgADL - True if this candidate would be
+    /// eliminated by P0934.
+    bool IsFromTemplateArgADL;
+
     /// IsSurrogate - True to indicate that this candidate is a
     /// surrogate for a conversion to a function pointer or reference
     /// (C++ [over.call.object]).

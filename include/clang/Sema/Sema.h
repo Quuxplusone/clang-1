@@ -2722,6 +2722,23 @@ public:
                             bool PartialOverloading = false,
                             bool AllowExplicit = false,
                             ConversionSequenceList EarlyConversions = None);
+  void AddOverloadCandidateFromTemplateArgADL(FunctionDecl *Function,
+                            DeclAccessPair FoundDecl,
+                            ArrayRef<Expr *> Args,
+                            OverloadCandidateSet &CandidateSet,
+                            bool SuppressUserConversions = false,
+                            bool PartialOverloading = false,
+                            bool AllowExplicit = false,
+                            ConversionSequenceList EarlyConversions = None);
+  void AddOverloadCandidateImpl(FunctionDecl *Function,
+                            DeclAccessPair FoundDecl,
+                            ArrayRef<Expr *> Args,
+                            OverloadCandidateSet &CandidateSet,
+                            bool SuppressUserConversions,
+                            bool PartialOverloading,
+                            bool AllowExplicit,
+                            ConversionSequenceList EarlyConversions,
+                            bool IsFromTemplateArgADL);
   void AddFunctionCandidates(const UnresolvedSetImpl &Functions,
                       ArrayRef<Expr *> Args,
                       OverloadCandidateSet &CandidateSet,
@@ -2761,6 +2778,22 @@ public:
                                     OverloadCandidateSet& CandidateSet,
                                     bool SuppressUserConversions = false,
                                     bool PartialOverloading = false);
+  void AddTemplateOverloadCandidateFromTemplateArgADL(
+                                    FunctionTemplateDecl *FunctionTemplate,
+                                    DeclAccessPair FoundDecl,
+                                 TemplateArgumentListInfo *ExplicitTemplateArgs,
+                                    ArrayRef<Expr *> Args,
+                                    OverloadCandidateSet& CandidateSet,
+                                    bool SuppressUserConversions = false,
+                                    bool PartialOverloading = false);
+  void AddTemplateOverloadCandidateImpl(FunctionTemplateDecl *FunctionTemplate,
+                                    DeclAccessPair FoundDecl,
+                                 TemplateArgumentListInfo *ExplicitTemplateArgs,
+                                    ArrayRef<Expr *> Args,
+                                    OverloadCandidateSet& CandidateSet,
+                                    bool SuppressUserConversions,
+                                    bool PartialOverloading,
+                                    bool IsFromTemplateArgADL);
   bool CheckNonDependentConversions(FunctionTemplateDecl *FunctionTemplate,
                                     ArrayRef<QualType> ParamTypes,
                                     ArrayRef<Expr *> Args,
@@ -3217,7 +3250,8 @@ public:
   bool isKnownName(StringRef name);
 
   void ArgumentDependentLookup(DeclarationName Name, SourceLocation Loc,
-                               ArrayRef<Expr *> Args, ADLResult &Functions);
+                               ArrayRef<Expr *> Args, ADLResult &Functions,
+                               bool IncludeTemplateArgs);
 
   void LookupVisibleDecls(Scope *S, LookupNameKind Kind,
                           VisibleDeclConsumer &Consumer,
@@ -3306,7 +3340,8 @@ public:
   void FindAssociatedClassesAndNamespaces(SourceLocation InstantiationLoc,
                                           ArrayRef<Expr *> Args,
                                    AssociatedNamespaceSet &AssociatedNamespaces,
-                                   AssociatedClassSet &AssociatedClasses);
+                                   AssociatedClassSet &AssociatedClasses,
+                                   bool IncludeTemplateArgs);
 
   void FilterLookupForScope(LookupResult &R, DeclContext *Ctx, Scope *S,
                             bool ConsiderLinkage, bool AllowInlineNamespace);

@@ -3558,6 +3558,10 @@ def note_ovl_too_many_candidates : Note<
     "remaining %0 candidate%s0 omitted; "
     "pass -fshow-overloads=all to show them">;
 
+def warn_ovl_from_template_parameter_adl : Warning<
+  "function '%0' was found via argument-dependent lookup "
+  "from a template type argument">, InGroup<ADL>, DefaultIgnore;
+
 def select_ovl_candidate_kind : TextSubstitution<
   "%select{function|function|constructor|"
     "constructor (the implicit default constructor)|"

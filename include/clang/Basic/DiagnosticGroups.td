@@ -20,6 +20,7 @@ def Implicit : DiagGroup<"implicit", [
 def : DiagGroup<"abi">;
 def AbsoluteValue : DiagGroup<"absolute-value">;
 def AddressOfTemporary : DiagGroup<"address-of-temporary">;
+def ADL : DiagGroup<"adl">;
 def : DiagGroup<"aggregate-return">;
 def GNUAlignofExpression : DiagGroup<"gnu-alignof-expression">;
 def AmbigMemberTemplate : DiagGroup<"ambiguous-member-template">;
@@ -766,6 +767,7 @@ def Extra : DiagGroup<"extra", [
   ]>;
 
 def Most : DiagGroup<"most", [
+    ADL,
     CharSubscript,
     Comment,
     DeleteNonVirtualDtor,

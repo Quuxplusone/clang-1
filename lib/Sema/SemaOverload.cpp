@@ -5921,14 +5921,15 @@ static bool IsAcceptableNonMemberOperatorCandidate(ASTContext &Context,
 /// based on an incomplete set of function arguments. This feature is used by
 /// code completion.
 void
-Sema::AddOverloadCandidate(FunctionDecl *Function,
-                           DeclAccessPair FoundDecl,
-                           ArrayRef<Expr *> Args,
-                           OverloadCandidateSet &CandidateSet,
-                           bool SuppressUserConversions,
-                           bool PartialOverloading,
-                           bool AllowExplicit,
-                           ConversionSequenceList EarlyConversions) {
+Sema::AddOverloadCandidateImpl(FunctionDecl *Function,
+                               DeclAccessPair FoundDecl,
+                               ArrayRef<Expr *> Args,
+                               OverloadCandidateSet &CandidateSet,
+                               bool SuppressUserConversions,
+                               bool PartialOverloading,
+                               bool AllowExplicit,
+                               ConversionSequenceList EarlyConversions,
+                               bool IsFromTemplateArgADL) {
   const FunctionProtoType *Proto
     = dyn_cast<FunctionProtoType>(Function->getType()->getAs<FunctionType>());
   assert(Proto && "Functions without a prototype cannot be overloaded");
@@ -5986,6 +5987,7 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
   Candidate.FoundDecl = FoundDecl;
   Candidate.Function = Function;
   Candidate.Viable = true;
+  Candidate.IsFromTemplateArgADL = IsFromTemplateArgADL;
   Candidate.IsSurrogate = false;
   Candidate.IgnoreObjectArgument = false;
   Candidate.ExplicitCallArguments = Args.size();
@@ -6116,6 +6118,30 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
     Candidate.FailureKind = ovl_fail_ext_disabled;
     return;
   }
+}
+
+void
+Sema::AddOverloadCandidate(FunctionDecl *Function,
+                           DeclAccessPair FoundDecl,
+                           ArrayRef<Expr *> Args,
+                           OverloadCandidateSet &CandidateSet,
+                           bool SuppressUserConversions,
+                           bool PartialOverloading,
+                           bool AllowExplicit,
+                           ConversionSequenceList EarlyConversions) {
+  AddOverloadCandidateImpl(Function, FoundDecl, Args, CandidateSet, SuppressUserConversions, PartialOverloading, AllowExplicit, EarlyConversions, false);
+}
+
+void
+Sema::AddOverloadCandidateFromTemplateArgADL(FunctionDecl *Function,
+                           DeclAccessPair FoundDecl,
+                           ArrayRef<Expr *> Args,
+                           OverloadCandidateSet &CandidateSet,
+                           bool SuppressUserConversions,
+                           bool PartialOverloading,
+                           bool AllowExplicit,
+                           ConversionSequenceList EarlyConversions) {
+  AddOverloadCandidateImpl(Function, FoundDecl, Args, CandidateSet, SuppressUserConversions, PartialOverloading, AllowExplicit, EarlyConversions, true);
 }
 
 ObjCMethodDecl *
@@ -6685,13 +6711,14 @@ Sema::AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
 /// in the candidate set, using template argument deduction to produce
 /// an appropriate function template specialization.
 void
-Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
+Sema::AddTemplateOverloadCandidateImpl(FunctionTemplateDecl *FunctionTemplate,
                                    DeclAccessPair FoundDecl,
                                  TemplateArgumentListInfo *ExplicitTemplateArgs,
                                    ArrayRef<Expr *> Args,
                                    OverloadCandidateSet& CandidateSet,
                                    bool SuppressUserConversions,
-                                   bool PartialOverloading) {
+                                   bool PartialOverloading,
+                                   bool IsFromTemplateArgADL) {
   if (!CandidateSet.isNewCandidate(FunctionTemplate))
     return;
 
@@ -6719,6 +6746,7 @@ Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
     Candidate.FoundDecl = FoundDecl;
     Candidate.Function = FunctionTemplate->getTemplatedDecl();
     Candidate.Viable = false;
+    Candidate.IsFromTemplateArgADL = IsFromTemplateArgADL;
     Candidate.IsSurrogate = false;
     // Ignore the object argument if there is one, since we don't have an object
     // type.
@@ -6739,10 +6767,37 @@ Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
   // Add the function template specialization produced by template argument
   // deduction as a candidate.
   assert(Specialization && "Missing function template specialization?");
-  AddOverloadCandidate(Specialization, FoundDecl, Args, CandidateSet,
+  AddOverloadCandidateImpl(Specialization, FoundDecl, Args, CandidateSet,
                        SuppressUserConversions, PartialOverloading,
-                       /*AllowExplicit*/false, Conversions);
+                       /*AllowExplicit*/false, Conversions, IsFromTemplateArgADL);
 }
+
+void
+Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
+                                   DeclAccessPair FoundDecl,
+                                 TemplateArgumentListInfo *ExplicitTemplateArgs,
+                                   ArrayRef<Expr *> Args,
+                                   OverloadCandidateSet& CandidateSet,
+                                   bool SuppressUserConversions,
+                                   bool PartialOverloading) {
+  AddTemplateOverloadCandidateImpl(FunctionTemplate, FoundDecl,
+      ExplicitTemplateArgs, Args, CandidateSet, SuppressUserConversions,
+      PartialOverloading, false);
+}
+
+void
+Sema::AddTemplateOverloadCandidateFromTemplateArgADL(FunctionTemplateDecl *FunctionTemplate,
+                                   DeclAccessPair FoundDecl,
+                                 TemplateArgumentListInfo *ExplicitTemplateArgs,
+                                   ArrayRef<Expr *> Args,
+                                   OverloadCandidateSet& CandidateSet,
+                                   bool SuppressUserConversions,
+                                   bool PartialOverloading) {
+  AddTemplateOverloadCandidateImpl(FunctionTemplate, FoundDecl,
+      ExplicitTemplateArgs, Args, CandidateSet, SuppressUserConversions,
+      PartialOverloading, true);
+}
+
 
 /// Check that implicit conversion sequences can be formed for each argument
 /// whose corresponding parameter has a non-dependent type, per DR1391's
@@ -8878,8 +8933,6 @@ Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
                                  TemplateArgumentListInfo *ExplicitTemplateArgs,
                                            OverloadCandidateSet& CandidateSet,
                                            bool PartialOverloading) {
-  ADLResult Fns;
-
   // FIXME: This approach for uniquing ADL results (and removing
   // redundant candidates from the set) relies on pointer-equality,
   // which means we need to key off the canonical decl.  However,
@@ -8887,33 +8940,55 @@ Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
   // right set of default arguments.  What default arguments are
   // we supposed to consider on ADL candidates, anyway?
 
-  // FIXME: Pass in the explicit template arguments?
-  ArgumentDependentLookup(Name, Loc, Args, Fns);
+  auto Step = [&](bool IncludeTemplateArgs, bool Mark) {
+    ADLResult Fns;
 
-  // Erase all of the candidates we already knew about.
-  for (OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
-                                   CandEnd = CandidateSet.end();
-       Cand != CandEnd; ++Cand)
-    if (Cand->Function) {
-      Fns.erase(Cand->Function);
-      if (FunctionTemplateDecl *FunTmpl = Cand->Function->getPrimaryTemplate())
-        Fns.erase(FunTmpl);
+    // FIXME: Pass in the explicit template arguments?
+    ArgumentDependentLookup(Name, Loc, Args, Fns, IncludeTemplateArgs);
+
+    // Erase all of the candidates we already knew about.
+    for (OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
+                                     CandEnd = CandidateSet.end();
+         Cand != CandEnd; ++Cand)
+      if (Cand->Function) {
+        Fns.erase(Cand->Function);
+        if (FunctionTemplateDecl *FunTmpl = Cand->Function->getPrimaryTemplate())
+          Fns.erase(FunTmpl);
+      }
+
+    // For each of the ADL candidates we found, add it to the overload
+    // set.
+    for (ADLResult::iterator I = Fns.begin(), E = Fns.end(); I != E; ++I) {
+      DeclAccessPair FoundDecl = DeclAccessPair::make(*I, AS_none);
+      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*I)) {
+        if (ExplicitTemplateArgs)
+          continue;
+
+        if (Mark) {
+          AddOverloadCandidateFromTemplateArgADL(
+              FD, FoundDecl, Args, CandidateSet, false, PartialOverloading);
+        } else {
+          AddOverloadCandidate(
+            FD, FoundDecl, Args, CandidateSet, false, PartialOverloading);
+        }
+      } else {
+        FunctionTemplateDecl *FTD = cast<FunctionTemplateDecl>(*I);
+        if (Mark) {
+          AddTemplateOverloadCandidateFromTemplateArgADL(
+              FTD, FoundDecl, ExplicitTemplateArgs, Args, CandidateSet, PartialOverloading);
+        } else {
+          AddTemplateOverloadCandidate(
+            FTD, FoundDecl, ExplicitTemplateArgs, Args, CandidateSet, PartialOverloading);
+        }
+      }
     }
+  };
 
-  // For each of the ADL candidates we found, add it to the overload
-  // set.
-  for (ADLResult::iterator I = Fns.begin(), E = Fns.end(); I != E; ++I) {
-    DeclAccessPair FoundDecl = DeclAccessPair::make(*I, AS_none);
-    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*I)) {
-      if (ExplicitTemplateArgs)
-        continue;
-
-      AddOverloadCandidate(FD, FoundDecl, Args, CandidateSet, false,
-                           PartialOverloading);
-    } else
-      AddTemplateOverloadCandidate(cast<FunctionTemplateDecl>(*I),
-                                   FoundDecl, ExplicitTemplateArgs,
-                                   Args, CandidateSet, PartialOverloading);
+  if (!getDiagnostics().isIgnored(diag::warn_ovl_from_template_parameter_adl, Loc)) {
+    Step(false, false);
+    Step(true, true);
+  } else {
+    Step(true, false);
   }
 }
 
@@ -11726,7 +11801,8 @@ DiagnoseTwoPhaseLookup(Sema &SemaRef, SourceLocation FnLoc,
       Sema::AssociatedClassSet AssociatedClasses;
       SemaRef.FindAssociatedClassesAndNamespaces(FnLoc, Args,
                                                  AssociatedNamespaces,
-                                                 AssociatedClasses);
+                                                 AssociatedClasses,
+                                                 true);
       Sema::AssociatedNamespaceSet SuggestedNamespaces;
       if (canBeDeclaredInNamespace(R.getLookupName())) {
         DeclContext *Std = SemaRef.getStdNamespace();
@@ -11986,6 +12062,13 @@ static ExprResult FinishOverloadedCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
     if (SemaRef.DiagnoseUseOfDecl(FDecl, ULE->getNameLoc()))
       return ExprError();
     Fn = SemaRef.FixOverloadedFunctionReference(Fn, (*Best)->FoundDecl, FDecl);
+
+    if ((*Best)->IsFromTemplateArgADL) {
+      SemaRef.Diag(Fn->getBeginLoc(), diag::warn_ovl_from_template_parameter_adl)
+        << FDecl->getQualifiedNameAsString()
+        << Fn->getSourceRange();
+    }
+
     return SemaRef.BuildResolvedCallExpr(Fn, FDecl, LParenLoc, Args, RParenLoc,
                                          ExecConfig);
   }

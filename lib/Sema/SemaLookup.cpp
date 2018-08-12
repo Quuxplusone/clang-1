@@ -2434,7 +2434,7 @@ namespace {
 } // end anonymous namespace
 
 static void
-addAssociatedClassesAndNamespaces(AssociatedLookup &Result, QualType T);
+addAssociatedClassesAndNamespaces(AssociatedLookup &Result, QualType T, bool IncludeTemplateArgs);
 
 static void CollectEnclosingNamespace(Sema::AssociatedNamespaceSet &Namespaces,
                                       DeclContext *Ctx) {
@@ -2458,7 +2458,8 @@ static void CollectEnclosingNamespace(Sema::AssociatedNamespaceSet &Namespaces,
 // lookup that involves a template argument (C++ [basic.lookup.koenig]p2).
 static void
 addAssociatedClassesAndNamespaces(AssociatedLookup &Result,
-                                  const TemplateArgument &Arg) {
+                                  const TemplateArgument &Arg,
+                                  bool IncludeTemplateArgs) {
   // C++ [basic.lookup.koenig]p2, last bullet:
   //   -- [...] ;
   switch (Arg.getKind()) {
@@ -2469,7 +2470,7 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result,
       // [...] the namespaces and classes associated with the types of the
       // template arguments provided for template type parameters (excluding
       // template template parameters)
-      addAssociatedClassesAndNamespaces(Result, Arg.getAsType());
+      addAssociatedClassesAndNamespaces(Result, Arg.getAsType(), IncludeTemplateArgs);
       break;
 
     case TemplateArgument::Template:
@@ -2499,7 +2500,7 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result,
 
     case TemplateArgument::Pack:
       for (const auto &P : Arg.pack_elements())
-        addAssociatedClassesAndNamespaces(Result, P);
+        addAssociatedClassesAndNamespaces(Result, P, IncludeTemplateArgs);
       break;
   }
 }
@@ -2509,7 +2510,8 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result,
 // (C++ [basic.lookup.koenig]p2).
 static void
 addAssociatedClassesAndNamespaces(AssociatedLookup &Result,
-                                  CXXRecordDecl *Class) {
+                                  CXXRecordDecl *Class,
+                                  bool IncludeTemplateArgs) {
 
   // Just silently ignore anything whose name is __va_list_tag.
   if (Class->getDeclName() == Result.S.VAListTagName)
@@ -2556,9 +2558,11 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result,
     // Add the associated namespace for this class.
     CollectEnclosingNamespace(Result.Namespaces, Ctx);
 
-    const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
-    for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
-      addAssociatedClassesAndNamespaces(Result, TemplateArgs[I]);
+    if (IncludeTemplateArgs) {
+      const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
+      for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
+        addAssociatedClassesAndNamespaces(Result, TemplateArgs[I], IncludeTemplateArgs);
+    }
   }
 
   // Only recurse into base classes for complete types.
@@ -2603,7 +2607,8 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result,
 // argument-dependent lookup with an argument of type T
 // (C++ [basic.lookup.koenig]p2).
 static void
-addAssociatedClassesAndNamespaces(AssociatedLookup &Result, QualType Ty) {
+addAssociatedClassesAndNamespaces(AssociatedLookup &Result, QualType Ty,
+                                  bool IncludeTemplateArgs) {
   // C++ [basic.lookup.koenig]p2:
   //
   //   For each argument type T in the function call, there is a set
@@ -2658,7 +2663,7 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result, QualType Ty) {
     case Type::Record: {
       CXXRecordDecl *Class =
           cast<CXXRecordDecl>(cast<RecordType>(T)->getDecl());
-      addAssociatedClassesAndNamespaces(Result, Class);
+      addAssociatedClassesAndNamespaces(Result, Class, IncludeTemplateArgs);
       break;
     }
 
@@ -2773,7 +2778,8 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result, QualType Ty) {
 void Sema::FindAssociatedClassesAndNamespaces(
     SourceLocation InstantiationLoc, ArrayRef<Expr *> Args,
     AssociatedNamespaceSet &AssociatedNamespaces,
-    AssociatedClassSet &AssociatedClasses) {
+    AssociatedClassSet &AssociatedClasses,
+    bool IncludeTemplateArgs) {
   AssociatedNamespaces.clear();
   AssociatedClasses.clear();
 
@@ -2791,7 +2797,7 @@ void Sema::FindAssociatedClassesAndNamespaces(
     Expr *Arg = Args[ArgIdx];
 
     if (Arg->getType() != Context.OverloadTy) {
-      addAssociatedClassesAndNamespaces(Result, Arg->getType());
+      addAssociatedClassesAndNamespaces(Result, Arg->getType(), IncludeTemplateArgs);
       continue;
     }
 
@@ -2816,7 +2822,7 @@ void Sema::FindAssociatedClassesAndNamespaces(
 
       // Add the classes and namespaces associated with the parameter
       // types and return type of this function.
-      addAssociatedClassesAndNamespaces(Result, FDecl->getType());
+      addAssociatedClassesAndNamespaces(Result, FDecl->getType(), IncludeTemplateArgs);
     }
   }
 }
@@ -3304,14 +3310,16 @@ void ADLResult::insert(NamedDecl *New) {
 }
 
 void Sema::ArgumentDependentLookup(DeclarationName Name, SourceLocation Loc,
-                                   ArrayRef<Expr *> Args, ADLResult &Result) {
+                                   ArrayRef<Expr *> Args, ADLResult &Result,
+                                   bool IncludeTemplateArgs) {
   // Find all of the associated namespaces and classes based on the
   // arguments we have.
   AssociatedNamespaceSet AssociatedNamespaces;
   AssociatedClassSet AssociatedClasses;
   FindAssociatedClassesAndNamespaces(Loc, Args,
                                      AssociatedNamespaces,
-                                     AssociatedClasses);
+                                     AssociatedClasses,
+                                     IncludeTemplateArgs);
 
   // C++ [basic.lookup.argdep]p3:
   //   Let X be the lookup set produced by unqualified lookup (3.4.1)
