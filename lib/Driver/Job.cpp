@@ -323,7 +323,7 @@ int Command::Execute(ArrayRef<llvm::Optional<StringRef>> Redirects,
     assert(Environment.back() == nullptr &&
            "Environment vector should be null-terminated by now");
     ArgvVectorStorage = llvm::toStringRefArray(Environment.data());
-    Env = makeArrayRef(ArgvVectorStorage);
+    Env = llvm::makeArrayRef(ArgvVectorStorage);
   }
 
   if (ResponseFile == nullptr) {

@@ -79,7 +79,7 @@ protected:
             FileContents))
       return "";
 
-    formatAndApplyAllReplacements(FileToReplacements, Context.Rewrite, "llvm");
+    tooling::formatAndApplyAllReplacements(FileToReplacements, Context.Rewrite, "llvm");
     return Context.getRewrittenText(InputFileID);
   }
 
