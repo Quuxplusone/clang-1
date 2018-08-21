@@ -308,22 +308,21 @@ static_assert(!__is_trivially_relocatable(T15<T18>), "");
 static_assert(__is_trivially_relocatable(T16<T18>), "not naturally, but it has the attribute");
 
 
+// This pattern is used heavily by libc++.
 struct T19 {
-    struct [[trivially_relocatable]] UniquePtr {
-        UniquePtr();
-        UniquePtr(const UniquePtr&) = delete;
-        UniquePtr(UniquePtr&&);
-        ~UniquePtr();
+    struct [[trivially_relocatable]] Base {
+        Base(Base&&);
+        ~Base();
     };
-    UniquePtr m;
-    T19(const T19&) {}
+    Base m;
+    T19(const T19&);
     T19(T19&&) = default;
 };
 
 static_assert(!__is_trivially_constructible(T19, const T19&), "user-provided copy constructor");
 static_assert(!__is_trivially_constructible(T19, T19&&), "defaulted non-trivial move constructor");
 static_assert(!__is_trivially_destructible(T19), "defaulted non-trivial destructor");
-static_assert(__is_trivially_relocatable(T19), "nevertheless, the Rule of Zero applies here");
+static_assert(__is_trivially_relocatable(T19), "Rule of Zero");
 
 
 struct T20 {
@@ -401,32 +400,59 @@ static_assert(__is_trivially_relocatable(T22), "because its members are triviall
 
 
 struct T23 {
-    struct Evil { Evil(Evil&); Evil(Evil&&) = default; ~Evil() = default; };
+    struct Evil {
+        Evil(Evil&);
+        Evil(Evil&&) = default;
+        ~Evil() = default;
+    };
     mutable Evil m;
 };
 void relocate_example(T23&& src) {
     T23 dst(static_cast<T23&&>(src));  // this moves m (trivial, defaulted)
     src.~T23();  // this destroys m (trivial, defaulted)
 }
-static_assert(__is_trivially_relocatable(T23::Evil), "because it is trivially move-constructible and destructible");
-static_assert(__is_constructible(T23, T23&&), "");
+static_assert(__is_trivially_constructible(T23::Evil, T23::Evil&&), "");
+static_assert(__is_trivially_destructible(T23::Evil), "");
+static_assert(__is_trivially_relocatable(T23::Evil), "trivially move-constructible and trivially destructible");
 static_assert(__is_constructible(T23, T23&), "");
 static_assert(!__is_constructible(T23, const T23&), "");
-static_assert(!__is_trivially_relocatable(T23), "because its copy operation is evil");
+static_assert(__is_trivially_constructible(T23, T23&&), "");
+static_assert(__is_trivially_destructible(T23), "");
+static_assert(__is_trivially_relocatable(T23), "");
 
 struct T23a {
-    struct Evil { Evil(Evil&); Evil(const Evil&) = default; ~Evil() = default; };
+    struct Evil {
+        Evil(Evil&);
+        Evil(const Evil&) = default;
+        ~Evil() = default;
+    };
     mutable Evil m;
 };
 void relocate_example(T23a&& src) {
     T23a dst(static_cast<T23a&&>(src));  // this copies m using the non-defaulted copy constructor
     src.~T23a();  // this destroys m (trivial, defaulted)
 }
-static_assert(__is_trivially_relocatable(T23a::Evil), "its defaulted move-constructor is trivial");
-static_assert(__is_constructible(T23a, T23a&&), "");
-static_assert(__is_constructible(T23a, T23a&), "");
-static_assert(__is_constructible(T23a, const T23a&), "");
-static_assert(!__is_trivially_relocatable(T23a), "because its copy operation is evil");
+static_assert(__is_trivially_constructible(T23a::Evil, T23a::Evil&&), "");
+static_assert(__is_trivially_destructible(T23a::Evil), "");
+static_assert(!__is_trivially_relocatable(T23a::Evil), "despite being trivially move-constructible and trivially destructible, it has a user-provided copy constructor");
+static_assert(__is_trivially_constructible(T23a, T23a&&), "");
+static_assert(__is_trivially_destructible(T23a), "");
+static_assert(!__is_trivially_relocatable(T23a), "because it has a non-trivially relocatable member");
+
+struct T23b {
+    struct Evil {
+        Evil(Evil&) = delete;
+        Evil(const Evil&) = default;
+        ~Evil() = default;
+    };
+    mutable Evil m;
+    T23b(const T23b&) = default;  // no implicit move constructor
+};
+static_assert(__is_trivially_constructible(T23b::Evil, T23b::Evil&&), "");
+static_assert(__is_trivially_destructible(T23b::Evil), "");
+static_assert(__is_trivially_relocatable(T23b::Evil), "it has no user-provided copy constructors");
+static_assert(!__is_constructible(T23b, T23b&&), "");
+static_assert(!__is_trivially_relocatable(T23b), "because it is not move-constructible");
 
 
 // Example from D1144R0
@@ -464,6 +490,54 @@ struct registered_object {
 struct Widget : registered_object {};
 static_assert(!__is_trivially_relocatable(registered_object), "");
 static_assert(!__is_trivially_relocatable(Widget), "");
+
+// Examples from D1144R0
+namespace ND {
+    struct M {
+        M() = default;
+        M(M&);
+        M(const M&) = default;
+    };
+    static_assert( __is_trivially_constructible(M, M&&), "" );
+    static_assert( __is_trivially_destructible(M), "" );
+    static_assert( !__is_trivially_relocatable(M), "" );
+
+    struct N {
+        mutable M m;
+    };
+    static_assert( __is_trivially_constructible(N, N&&), "" );
+    static_assert( __is_trivially_destructible(N), "" );
+    static_assert( !__is_trivially_relocatable(N), "" );
+
+    struct [[trivially_relocatable]] O {
+        O(const O&);
+        mutable int o;
+    };
+    static_assert( __is_trivially_relocatable(O), "" );
+
+    struct T : N {
+        T(const T&) = default;
+    };
+    static_assert( !__is_trivially_constructible(T, T&&), "" );
+    static_assert( __is_trivially_destructible(T), "" );
+    static_assert( !__is_trivially_relocatable(T), "" );
+
+    struct U : N {};
+    static_assert( __is_trivially_constructible(U, U&&), "" );
+    static_assert( __is_trivially_destructible(U), "" );
+    static_assert( !__is_trivially_relocatable(U), "" );
+
+    struct V {
+        O o;
+    };
+    static_assert( __is_trivially_relocatable(V), "" );
+
+    struct W {
+        O o;
+        W(const W&) = default;
+    };
+    static_assert( __is_trivially_relocatable(W), "" );
+} // namespace ND
 
 // Example from Nicolas Lesser
 struct NL1 {
@@ -508,3 +582,11 @@ struct NL5b {
 };
 static_assert(!__is_trivially_relocatable(NL5<NL5a>), "");
 static_assert(__is_trivially_relocatable(NL5<NL5b>), "");
+
+struct NL6 {
+    NL6(volatile NL6&) = delete;
+    NL6(const NL6&) = default;
+};
+static_assert(__is_trivially_constructible(NL6, NL6&&), "");
+static_assert(__is_trivially_destructible(NL6), "");
+static_assert(__is_trivially_relocatable(NL6), "it is trivially move-constructible and trivially destructible");
