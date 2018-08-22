@@ -16085,7 +16085,11 @@ void Sema::ActOnFields(Scope *S, SourceLocation RecLoc, Decl *EnclosingDecl,
 
     if (CXXRecord) {
       QualType FT = FD->getType();
-      if (!FT->isReferenceType() && !FT.isTriviallyRelocatableType(Context))
+      if (FD->isMutable())
+        CXXRecord->setIsNotNaturallyTriviallyRelocatable();
+      else if (FT.isVolatileQualified())
+        CXXRecord->setIsNotNaturallyTriviallyRelocatable();
+      else if (!FT->isReferenceType() && !FT.isTriviallyRelocatableType(Context))
         CXXRecord->setIsNotNaturallyTriviallyRelocatable();
     }
 

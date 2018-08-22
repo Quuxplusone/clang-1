@@ -116,7 +116,7 @@ static_assert(!__is_trivially_relocatable(volatile int&), "");
 
 struct C1 { int x; }; static_assert(__is_trivially_relocatable(C1), "");
 struct C2 { const int x; }; static_assert(__is_trivially_relocatable(C2), "");
-struct C3 { volatile int x; }; static_assert(__is_trivially_relocatable(C3), "");
+struct C3 { volatile int x; }; static_assert(!__is_trivially_relocatable(C3), "volatile member");
 struct C4 { int *x; }; static_assert(__is_trivially_relocatable(C4), "");
 struct C5 { const int *x; }; static_assert(__is_trivially_relocatable(C5), "");
 struct C6 { volatile int *x; }; static_assert(__is_trivially_relocatable(C6), "");
@@ -418,7 +418,7 @@ static_assert(__is_constructible(T23, T23&), "");
 static_assert(!__is_constructible(T23, const T23&), "");
 static_assert(__is_trivially_constructible(T23, T23&&), "");
 static_assert(__is_trivially_destructible(T23), "");
-static_assert(__is_trivially_relocatable(T23), "");
+static_assert(!__is_trivially_relocatable(T23), "mutable member (even though this would be safe in practice)");
 
 struct T23a {
     struct Evil {
@@ -491,8 +491,8 @@ struct Widget : registered_object {};
 static_assert(!__is_trivially_relocatable(registered_object), "");
 static_assert(!__is_trivially_relocatable(Widget), "");
 
-// Examples from D1144R0
-namespace ND {
+// Examples from D1144R0 draft revision 11
+namespace ND11 {
     struct M {
         M() = default;
         M(M&);
@@ -537,7 +537,57 @@ namespace ND {
         W(const W&) = default;
     };
     static_assert( __is_trivially_relocatable(W), "" );
-} // namespace ND
+} // namespace ND11
+
+// Examples from D1144R0 draft revision 14
+namespace ND14 {
+    struct A {
+        struct MA {
+            MA(MA&);
+            MA(const MA&) = default;
+            MA(MA&&) = default;
+        };
+        mutable MA ma;
+        A(const A&) = default;
+    };
+    static_assert(!__is_trivially_relocatable(A), "calls user-provided MA(MA&)");
+
+    struct B {
+        struct MB {
+            MB(const volatile MB&);
+            MB(const MB&) = default;
+            MB(MB&&) = default;
+        };
+        volatile MB mb;
+        B(const B&) = default;
+    };
+    static_assert(!__is_trivially_relocatable(B), "calls user-provided MB(const volatile MB&)");
+
+    struct [[trivially_relocatable]] I {
+        I(I&&);
+    };
+    struct J : I {
+        J(const J&);
+        J(J&&) = default;
+    };
+    static_assert(__is_trivially_relocatable(I), "has the attribute");
+    static_assert(__is_trivially_relocatable(J), "inheritance pattern used by std::vector etc.");
+
+    struct [[trivially_relocatable]] K {
+        K(const K&&);
+        K(const K&);
+        K(K&&);
+        K(K&);
+        volatile int m1;
+        mutable int m2;
+        ~K();
+    };
+    struct L : K {
+        K k;
+    };
+    static_assert(__is_trivially_relocatable(K), "the attribute should override all other considerations");
+    static_assert(__is_trivially_relocatable(L), "the Rule of Zero should work as expected");
+}
 
 // Example from Nicolas Lesser
 struct NL1 {
