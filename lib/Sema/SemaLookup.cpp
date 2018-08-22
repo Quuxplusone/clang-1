@@ -2934,6 +2934,11 @@ Sema::SpecialMemberOverloadResult Sema::LookupSpecialMember(CXXRecordDecl *RD,
     if (RD->needsImplicitDestructor())
       DeclareImplicitDestructor(RD);
     CXXDestructorDecl *DD = RD->getDestructor();
+    if (DD == nullptr) {
+      // https://bugs.llvm.org/show_bug.cgi?id=38671
+      Result->setKind(SpecialMemberOverloadResult::NoMemberOrDeleted);
+      return *Result;
+    }
     assert(DD && "record without a destructor");
     Result->setMethod(DD);
     Result->setKind(DD->isDeleted() ?
