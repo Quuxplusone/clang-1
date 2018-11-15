@@ -175,6 +175,7 @@ def FormatZeroLength : DiagGroup<"format-zero-length">;
 
 def InvalidIOSDeploymentTarget : DiagGroup<"invalid-ios-deployment-target">;
 
+def CXX14CompatCTAD : DiagGroup<"c++14-compat-ctad">;
 def CXX17CompatMangling : DiagGroup<"c++17-compat-mangling">;
 def : DiagGroup<"c++1z-compat-mangling", [CXX17CompatMangling]>;
 // Name of this warning in GCC.
@@ -185,7 +186,8 @@ def CXXPre14Compat : DiagGroup<"c++98-c++11-compat">;
 def CXXPre14CompatPedantic : DiagGroup<"c++98-c++11-compat-pedantic",
                                        [CXXPre14Compat,
                                         CXXPre14CompatBinaryLiteral]>;
-def CXXPre17Compat : DiagGroup<"c++98-c++11-c++14-compat">;
+def CXXPre17Compat : DiagGroup<"c++98-c++11-c++14-compat",
+                                       [CXX14CompatCTAD]>;
 def CXXPre17CompatPedantic : DiagGroup<"c++98-c++11-c++14-compat-pedantic",
                                        [CXXPre17Compat]>;
 def CXXPre2aCompat : DiagGroup<"c++98-c++11-c++14-c++17-compat">;
