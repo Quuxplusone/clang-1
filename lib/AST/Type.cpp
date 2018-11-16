@@ -2267,7 +2267,7 @@ bool QualType::isTriviallyCopyableType(const ASTContext &Context) const {
 }
 
 bool QualType::isTriviallyRelocatableType(const ASTContext &Context) const {
-  QualType T = Context.getBaseElementType(*this);
+  QualType T = Context.getBaseElementType(getCanonicalType());
   if (T->isIncompleteType())
     return false;
   if (CXXRecordDecl *RD = T->getAsCXXRecordDecl()) {
