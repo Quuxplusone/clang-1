@@ -1752,6 +1752,8 @@ Error ASTNodeImporter::ImportDefinition(
     ToData.HasTrivialSpecialMembers = FromData.HasTrivialSpecialMembers;
     ToData.IsNaturallyTriviallyRelocatable
       = FromData.IsNaturallyTriviallyRelocatable;
+    ToData.HasNonTriviallyRelocatableSubobject
+      = FromData.HasNonTriviallyRelocatableSubobject;
     ToData.HasIrrelevantDestructor = FromData.HasIrrelevantDestructor;
     ToData.HasConstexprNonCopyMoveConstructor
       = FromData.HasConstexprNonCopyMoveConstructor;

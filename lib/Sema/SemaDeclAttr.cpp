@@ -6086,6 +6086,11 @@ static void handleTriviallyRelocatableAttr(Sema &S, Decl *D, const ParsedAttr &A
   handleSimpleAttribute<TriviallyRelocatableAttr>(S, D, AL);
 }
 
+static void handleMaybeTriviallyRelocatableAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
+  checkAttributeNotOnFirstDecl<MaybeTriviallyRelocatableAttr>(S, D, AL);
+  handleSimpleAttribute<MaybeTriviallyRelocatableAttr>(S, D, AL);
+}
+
 DLLImportAttr *Sema::mergeDLLImportAttr(Decl *D, SourceRange Range,
                                         unsigned AttrSpellingListIndex) {
   if (D->hasAttr<DLLExportAttr>()) {
@@ -7152,6 +7157,9 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     break;
   case ParsedAttr::AT_TriviallyRelocatable:
     handleTriviallyRelocatableAttr(S, D, AL);
+    break;
+  case ParsedAttr::AT_MaybeTriviallyRelocatable:
+    handleMaybeTriviallyRelocatableAttr(S, D, AL);
     break;
   case ParsedAttr::AT_MSNoVTable:
     handleSimpleAttribute<MSNoVTableAttr>(S, D, AL);

@@ -6103,6 +6103,7 @@ void ASTRecordWriter::AddCXXDefinitionData(const CXXRecordDecl *D) {
   Record->push_back(Data.DeclaredNonTrivialSpecialMembers);
   Record->push_back(Data.DeclaredNonTrivialSpecialMembersForCall);
   Record->push_back(Data.IsNaturallyTriviallyRelocatable);
+  Record->push_back(Data.HasNonTriviallyRelocatableSubobject);
   Record->push_back(Data.HasIrrelevantDestructor);
   Record->push_back(Data.HasConstexprNonCopyMoveConstructor);
   Record->push_back(Data.HasDefaultedDefaultConstructor);

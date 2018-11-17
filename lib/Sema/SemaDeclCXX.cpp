@@ -6239,6 +6239,9 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
               << Context.getRecordType(Record) << true;
         }
       }
+      if (Record->hasAttr<MaybeTriviallyRelocatableAttr>()) {
+        Record->dropAttr<MaybeTriviallyRelocatableAttr>();
+      }
     } else {
       // Check that the constructor used for move-construction is non-deleted.
       SMOR = LookupSpecialMember(Record, CXXMoveConstructor, false, false,
@@ -6254,6 +6257,9 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
                 << Record->getCanonicalDecl()->getTagKind()
                 << Context.getRecordType(Record) << false;
           }
+        }
+        if (Record->hasAttr<MaybeTriviallyRelocatableAttr>()) {
+          Record->dropAttr<MaybeTriviallyRelocatableAttr>();
         }
       }
     }
