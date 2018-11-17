@@ -58,6 +58,7 @@ struct NonCopyConstructible {
 struct NonMoveConstructible {
     NonMoveConstructible(const NonMoveConstructible&) = default;
     NonMoveConstructible(NonMoveConstructible&&) = delete;
+    // expected-note@-1{{explicitly marked deleted here}}
 };
 static_assert(!__is_trivially_relocatable(NonDestructible), "");
 static_assert(!__is_trivially_relocatable(NonCopyConstructible), "");
@@ -82,7 +83,9 @@ struct [[trivially_relocatable]] D5 : private NonCopyConstructible { };
 static_assert(!__is_constructible(D5, D5&&), "");
 
 struct [[trivially_relocatable]] D6 : private NonMoveConstructible { D6(D6&&) = default; };
-// expected-error@-1{{cannot be applied to struct 'D6' because it is not move-constructible}}
+// expected-warning@-1{{explicitly defaulted move constructor is implicitly deleted}}
+// expected-note@-2{{implicitly deleted because}}
+// expected-error@-3{{cannot be applied to struct 'D6' because it is not move-constructible}}
 
 template<class T>
 struct [[trivially_relocatable]] DT1 : private T { };  // ok
@@ -441,12 +444,13 @@ static_assert(!__is_trivially_relocatable(T23a), "because it has a non-trivially
 
 struct T23b {
     struct Evil {
-        Evil(Evil&) = delete;
+        Evil(Evil&) = delete; // expected-note{{explicitly marked deleted here}}
         Evil(const Evil&) = default;
         ~Evil() = default;
     };
-    mutable Evil m;
+    mutable Evil m; // expected-note{{implicitly deleted because}}
     T23b(const T23b&) = default;  // no implicit move constructor
+    // expected-warning@-1{{explicitly defaulted copy constructor is implicitly deleted}}
 };
 static_assert(__is_trivially_constructible(T23b::Evil, T23b::Evil&&), "");
 static_assert(__is_trivially_destructible(T23b::Evil), "");
