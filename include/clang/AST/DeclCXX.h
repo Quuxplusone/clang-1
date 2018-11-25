@@ -1531,6 +1531,10 @@ public:
     data().IsNaturallyTriviallyRelocatable = false;
   }
 
+  bool hasNonTriviallyRelocatableSubobject() const {
+    return data().HasNonTriviallyRelocatableSubobject;
+  }
+
   void setHasNonTriviallyRelocatableSubobject() {
     data().HasNonTriviallyRelocatableSubobject = true;
   }
