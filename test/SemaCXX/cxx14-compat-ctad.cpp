@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -std=c++17 -Wc++14-compat-ctad -verify %s
-// RUN: %clang_cc1 -fsyntax-only -std=c++2a -Wc++14-compat-ctad -verify %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++17 -Wctad -verify %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++2a -Wctad -verify %s
 
 template<typename T = int> struct X {};
 X x; // expected-warning {{class template argument deduction is incompatible with C++ standards before C++17; for compatibility, use explicit type name 'X<int>'}}
