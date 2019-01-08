@@ -6083,7 +6083,20 @@ static void checkAttributeNotOnFirstDecl(Sema &S, Decl *D, const ParsedAttr &AL)
 
 static void handleTriviallyRelocatableAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
   checkAttributeNotOnFirstDecl<TriviallyRelocatableAttr>(S, D, AL);
-  handleSimpleAttribute<TriviallyRelocatableAttr>(S, D, AL);
+
+  Expr *Cond = nullptr;
+  if (AL.getNumArgs() == 1) {
+    Cond = AL.getArgAsExpr(0);
+    if (!Cond->isTypeDependent()) {
+      ExprResult Converted = S.PerformContextuallyConvertToBool(Cond);
+      if (Converted.isInvalid()) {
+        return;
+      }
+      Cond = Converted.get();
+    }
+  }
+
+  D->addAttr(::new (S.Context) TriviallyRelocatableAttr(AL.getRange(), S.Context, Cond, AL.getAttributeSpellingListIndex()));
 }
 
 static void handleMaybeTriviallyRelocatableAttr(Sema &S, Decl *D, const ParsedAttr &AL) {

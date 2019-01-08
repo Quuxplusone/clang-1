@@ -6225,6 +6225,28 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
   }
 
   if (getLangOpts().CPlusPlus11 && !Record->isDependentContext()) {
+
+    // Deal with [[trivially_relocatable(condition)]].
+    if (auto *TRA = Record->getAttr<TriviallyRelocatableAttr>()) {
+      if (Expr *Arg = TRA->getCond()) {
+        // Evaluate the condition. If it's ill-formed, ignore the attribute.
+        // If it's well-formed and false, render this type NOT trivially relocatable.
+        SFINAETrap Trap(*this);
+        bool Result = false;
+        if (!Arg->EvaluateAsBooleanCondition(Result, Context)) {
+          // An ill-formed, non-constant, or non-boolean expression drops the attribute.
+          Record->dropAttr<TriviallyRelocatableAttr>();
+        } else if (!Result) {
+          // A well-formed "false" disables trivial relocation for this class.
+          // I have no use-case for this behavior, but it seems more logical than
+          // allowing a [[trivially_relocatable(false)]] class to be trivially
+          // relocatable.
+          Record->setIsNotNaturallyTriviallyRelocatable();
+          Record->dropAttr<TriviallyRelocatableAttr>();
+        }
+      }
+    }
+
     // Check that the destructor is non-deleted.
     SpecialMemberOverloadResult SMOR = LookupSpecialMember(
         Record, CXXDestructor, false, false, false, false, false);
