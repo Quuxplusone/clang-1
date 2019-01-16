@@ -6068,6 +6068,7 @@ static void handleLayoutVersion(Sema &S, Decl *D, const ParsedAttr &AL) {
                                    AL.getAttributeSpellingListIndex()));
 }
 
+#if 0
 template<class AttrType>
 static void checkAttributeNotOnFirstDecl(Sema &S, Decl *D, const ParsedAttr &AL) {
   Decl *FirstD = D->getCanonicalDecl();
@@ -6080,9 +6081,10 @@ static void checkAttributeNotOnFirstDecl(Sema &S, Decl *D, const ParsedAttr &AL)
       << FirstD->getSourceRange();
   }
 }
+#endif
 
 static void handleTriviallyRelocatableAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
-  checkAttributeNotOnFirstDecl<TriviallyRelocatableAttr>(S, D, AL);
+  // checkAttributeNotOnFirstDecl<TriviallyRelocatableAttr>(S, D, AL);
 
   Expr *Cond = nullptr;
   if (AL.getNumArgs() == 1) {
@@ -6100,7 +6102,7 @@ static void handleTriviallyRelocatableAttr(Sema &S, Decl *D, const ParsedAttr &A
 }
 
 static void handleMaybeTriviallyRelocatableAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
-  checkAttributeNotOnFirstDecl<MaybeTriviallyRelocatableAttr>(S, D, AL);
+  // checkAttributeNotOnFirstDecl<MaybeTriviallyRelocatableAttr>(S, D, AL);
   handleSimpleAttribute<MaybeTriviallyRelocatableAttr>(S, D, AL);
 }
 
