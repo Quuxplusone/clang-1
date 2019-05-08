@@ -32,15 +32,11 @@ struct A4 {};
 
 struct A5 {};
 struct [[clang::maybe_trivially_relocatable]] A5;
-// expected-error@-1{{type A5 declared 'maybe_trivially_relocatable' after its first declaration}}
-// expected-note@-3{{declaration missing 'maybe_trivially_relocatable' attribute is here}}
-// expected-warning@-3{{attribute declaration must precede definition}}
-// expected-note@-5{{previous definition is here}}
+// expected-warning@-1{{attribute declaration must precede definition}}
+// expected-note@-3{{previous definition is here}}
 
 struct A6;
 struct [[clang::maybe_trivially_relocatable]] A6 {};
-// expected-error@-1{{type A6 declared 'maybe_trivially_relocatable' after its first declaration}}
-// expected-note@-3{{declaration missing 'maybe_trivially_relocatable' attribute is here}}
 
 
 // If a type T is declared with the trivially_relocatable attribute, and T is
