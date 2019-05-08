@@ -3533,6 +3533,8 @@ def err_objc_bridged_related_known_method : Error<
 
 def err_objc_attr_protocol_requires_definition : Error<
   "attribute %0 can only be applied to @protocol definitions, not forward declarations">;
+def err_attr_trivially_relocatable_requires_definition : Error<
+  "attribute %0 can only be applied to class or template definitions, not forward declarations">;
 
 def warn_ignored_objc_externally_retained : Warning<
   "'objc_externally_retained' can only be applied to local variables "
