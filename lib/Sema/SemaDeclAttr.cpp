@@ -6189,11 +6189,7 @@ static void checkAttributeNotOnFirstDecl(Sema &S, Decl *D, const ParsedAttr &AL)
 #endif
 
 static void handleTriviallyRelocatableAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
-  if (!D->isThisDeclarationADefinition()) {
-    S.Diag(AL.getLoc(), diag::err_attr_trivially_relocatable_requires_definition)
-        << AL << AL.getRange();
-    return;
-  }
+  // checkAttributeNotOnFirstDecl<TriviallyRelocatableAttr>(S, D, AL);
 
   Expr *Cond = nullptr;
   if (AL.getNumArgs() == 1) {
@@ -6211,12 +6207,7 @@ static void handleTriviallyRelocatableAttr(Sema &S, Decl *D, const ParsedAttr &A
 }
 
 static void handleMaybeTriviallyRelocatableAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
-  if (!D->isThisDeclarationADefinition()) {
-    S.Diag(AL.getLoc(), diag::err_attr_trivially_relocatable_requires_definition)
-        << AL << AL.getRange();
-    return;
-  }
-
+  // checkAttributeNotOnFirstDecl<MaybeTriviallyRelocatableAttr>(S, D, AL);
   handleSimpleAttribute<MaybeTriviallyRelocatableAttr>(S, D, AL);
 }
 
