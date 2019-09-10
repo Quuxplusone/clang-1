@@ -497,7 +497,7 @@ MacOSKeychainAPIChecker::generateAllocatedDataNotReleasedReport(
 
   Report->addVisitor(std::make_unique<SecKeychainBugVisitor>(AP.first));
   markInteresting(Report.get(), AP);
-  return Report;
+  return std::move(Report);
 }
 
 /// If the return symbol is assumed to be error, remove the allocated info
