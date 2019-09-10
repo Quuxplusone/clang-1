@@ -201,7 +201,7 @@ NonNullParamChecker::genReportNullAttrNonNull(const ExplodedNode *ErrorNode,
   if (ArgE)
     bugreporter::trackExpressionValue(ErrorNode, ArgE, *R);
 
-  return R;
+  return std::move(R);
 }
 
 std::unique_ptr<BugReport> NonNullParamChecker::genReportReferenceToNullPointer(
@@ -217,7 +217,7 @@ std::unique_ptr<BugReport> NonNullParamChecker::genReportReferenceToNullPointer(
       ArgEDeref = ArgE;
     bugreporter::trackExpressionValue(ErrorNode, ArgEDeref, *R);
   }
-  return R;
+  return std::move(R);
 
 }
 

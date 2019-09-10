@@ -243,5 +243,5 @@ llvm::Expected<std::unique_ptr<DirectoryWatcher>> clang::DirectoryWatcher::creat
     dispatch_async(Queue, InitWork);
   }
 
-  return Result;
+  return std::move(Result);
 }
