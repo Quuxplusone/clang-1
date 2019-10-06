@@ -243,6 +243,9 @@ static_assert(!__is_trivially_relocatable(T7), "T7 has no implicitly declared mo
 struct T8 { virtual void f() {} int x; };
 static_assert(__is_trivially_relocatable(T8), "T8 has a vptr but that's fine");
 
+struct T8a { virtual void g() = 0; int x; };
+static_assert(__is_trivially_relocatable(T8a), "T8a is abstract but that's fine");
+
 struct [[clang::maybe_trivially_relocatable]] T9 { int x; T9(T9&&) {} };
 static_assert(__is_trivially_relocatable(T9), "T9 isn't naturally, but it has the attribute");
 
@@ -272,11 +275,11 @@ struct T12 {
 };
 static_assert(!__is_trivially_relocatable(T12), "not all fields have trivially relocatable types");
 
-struct T13 : T1, T2, T3, T4 {};
+struct T13 : T1, T2, T3, T4, T8a {};
 static_assert(__is_trivially_relocatable(T13), "all bases have trivially relocatable types");
 
 struct T14 : T1, T6, T3, T4 {};
-static_assert(!__is_trivially_relocatable(T14), "all bases have trivially relocatable types");
+static_assert(!__is_trivially_relocatable(T14), "not all bases have trivially relocatable types");
 
 template<class... Ts>
 struct T15 : Ts... {};
