@@ -3690,7 +3690,6 @@ struct DoesNotAllowConstDefaultInit {
 // CHECK-NEXT:   "copyCtor": {
 // CHECK-NEXT:    "hasConstParam": true,
 // CHECK-NEXT:    "implicitHasConstParam": true,
-// CHECK-NEXT:    "needsImplicit": true,
 // CHECK-NEXT:    "simple": true,
 // CHECK-NEXT:    "trivial": true
 // CHECK-NEXT:   },
@@ -3763,7 +3762,57 @@ struct DoesNotAllowConstDefaultInit {
 // CHECK-NEXT:     "qualType": "void ()"
 // CHECK-NEXT:    },
 // CHECK-NEXT:    "explicitlyDefaulted": "default"
-// CHECK-NEXT:   }
+// CHECK-NEXT:    },
+// CHECK-NEXT:    {
+// CHECK-NEXT:      "id": "0x{{.+}}",
+// CHECK-NEXT:      "kind": "CXXConstructorDecl",
+// CHECK-NEXT:      "loc": {
+// CHECK-NEXT:        "line": 79,
+// CHECK-NEXT:        "col": 8,
+// CHECK-NEXT:        "tokLen": 9
+// CHECK-NEXT:      },
+// CHECK-NEXT:      "range": {
+// CHECK-NEXT:        "begin": {
+// CHECK-NEXT:          "col": 8,
+// CHECK-NEXT:          "tokLen": 9
+// CHECK-NEXT:        },
+// CHECK-NEXT:        "end": {
+// CHECK-NEXT:          "col": 8,
+// CHECK-NEXT:          "tokLen": 9
+// CHECK-NEXT:        }
+// CHECK-NEXT:      },
+// CHECK-NEXT:      "isImplicit": true,
+// CHECK-NEXT:      "name": "IsLiteral",
+// CHECK-NEXT:      "type": {
+// CHECK-NEXT:        "qualType": "void (const IsLiteral &)"
+// CHECK-NEXT:      },
+// CHECK-NEXT:      "inline": true,
+// CHECK-NEXT:      "constexpr": true,
+// CHECK-NEXT:      "explicitlyDefaulted": "default",
+// CHECK-NEXT:      "inner": [
+// CHECK-NEXT:        {
+// CHECK-NEXT:          "id": "0x{{.+}}",
+// CHECK-NEXT:          "kind": "ParmVarDecl",
+// CHECK-NEXT:          "loc": {
+// CHECK-NEXT:            "col": 8,
+// CHECK-NEXT:            "tokLen": 9
+// CHECK-NEXT:          },
+// CHECK-NEXT:          "range": {
+// CHECK-NEXT:            "begin": {
+// CHECK-NEXT:              "col": 8,
+// CHECK-NEXT:              "tokLen": 9
+// CHECK-NEXT:            },
+// CHECK-NEXT:            "end": {
+// CHECK-NEXT:              "col": 8,
+// CHECK-NEXT:              "tokLen": 9
+// CHECK-NEXT:            }
+// CHECK-NEXT:          },
+// CHECK-NEXT:          "type": {
+// CHECK-NEXT:            "qualType": "const IsLiteral &"
+// CHECK-NEXT:          }
+// CHECK-NEXT:        }
+// CHECK-NEXT:      ]
+// CHECK-NEXT:    }
 // CHECK-NEXT:  ]
 // CHECK-NEXT: }
 
@@ -3799,7 +3848,6 @@ struct DoesNotAllowConstDefaultInit {
 // CHECK-NEXT:   "copyCtor": {
 // CHECK-NEXT:    "hasConstParam": true,
 // CHECK-NEXT:    "implicitHasConstParam": true,
-// CHECK-NEXT:    "needsImplicit": true,
 // CHECK-NEXT:    "simple": true,
 // CHECK-NEXT:    "trivial": true
 // CHECK-NEXT:   },
@@ -3883,7 +3931,57 @@ struct DoesNotAllowConstDefaultInit {
 // CHECK-NEXT:      }
 // CHECK-NEXT:     }
 // CHECK-NEXT:    ]
-// CHECK-NEXT:   }
+// CHECK-NEXT:    },
+// CHECK-NEXT:    {
+// CHECK-NEXT:      "id": "0x{{.+}}",
+// CHECK-NEXT:      "kind": "CXXConstructorDecl",
+// CHECK-NEXT:      "loc": {
+// CHECK-NEXT:        "line": 83,
+// CHECK-NEXT:        "col": 8,
+// CHECK-NEXT:        "tokLen": 12
+// CHECK-NEXT:      },
+// CHECK-NEXT:      "range": {
+// CHECK-NEXT:        "begin": {
+// CHECK-NEXT:          "col": 8,
+// CHECK-NEXT:          "tokLen": 12
+// CHECK-NEXT:        },
+// CHECK-NEXT:        "end": {
+// CHECK-NEXT:          "col": 8,
+// CHECK-NEXT:          "tokLen": 12
+// CHECK-NEXT:        }
+// CHECK-NEXT:      },
+// CHECK-NEXT:      "isImplicit": true,
+// CHECK-NEXT:      "name": "IsNotLiteral",
+// CHECK-NEXT:      "type": {
+// CHECK-NEXT:        "qualType": "void (const IsNotLiteral &)"
+// CHECK-NEXT:      },
+// CHECK-NEXT:      "inline": true,
+// CHECK-NEXT:      "constexpr": true,
+// CHECK-NEXT:      "explicitlyDefaulted": "default",
+// CHECK-NEXT:      "inner": [
+// CHECK-NEXT:        {
+// CHECK-NEXT:          "id": "0x{{.+}}",
+// CHECK-NEXT:          "kind": "ParmVarDecl",
+// CHECK-NEXT:          "loc": {
+// CHECK-NEXT:            "col": 8,
+// CHECK-NEXT:            "tokLen": 12
+// CHECK-NEXT:          },
+// CHECK-NEXT:          "range": {
+// CHECK-NEXT:            "begin": {
+// CHECK-NEXT:              "col": 8,
+// CHECK-NEXT:              "tokLen": 12
+// CHECK-NEXT:            },
+// CHECK-NEXT:            "end": {
+// CHECK-NEXT:              "col": 8,
+// CHECK-NEXT:              "tokLen": 12
+// CHECK-NEXT:            }
+// CHECK-NEXT:          },
+// CHECK-NEXT:          "type": {
+// CHECK-NEXT:            "qualType": "const IsNotLiteral &"
+// CHECK-NEXT:          }
+// CHECK-NEXT:        }
+// CHECK-NEXT:      ]
+// CHECK-NEXT:    }
 // CHECK-NEXT:  ]
 // CHECK-NEXT: }
 
