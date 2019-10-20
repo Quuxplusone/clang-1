@@ -6158,22 +6158,22 @@ static bool canPassInRegisters(Sema &S, CXXRecordDecl *D,
   return HasNonDeletedCopyOrMove;
 }
 
-static bool CheckTrivalDestructor(Sema &S, CXXRecordDecl *R,
-                                  bool AlwaysUseLookup) {
+static bool lookupTrivialDestructor(Sema &S, CXXRecordDecl *R,
+                                    bool AlwaysUseLookup) {
   if (AlwaysUseLookup || R->hasUserDeclaredDestructor() ||
       R->needsOverloadResolutionForDestructor() ||
       (R->needsImplicitDestructor() && !R->hasTrivialDestructor())) {
 
     Sema::SpecialMemberOverloadResult SMOR = S.LookupSpecialMember(
         R, Sema::CXXDestructor, false, false, false, false, false);
-    return SMOR.getKind() != Sema::SpecialMemberOverloadResult::Success;
+    return SMOR.getKind() == Sema::SpecialMemberOverloadResult::Success;
   }
 
-  return !R->hasTrivialDestructor();
+  return R->hasTrivialDestructor();
 }
 
-static bool CheckTrivalMoveConstructor(Sema &S, CXXRecordDecl *R,
-                                       bool AlwaysUseLookup) {
+static bool lookupTrivialMoveConstructor(Sema &S, CXXRecordDecl *R,
+                                         bool AlwaysUseLookup) {
   if (AlwaysUseLookup || R->hasUserDeclaredMoveConstructor() ||
       R->needsOverloadResolutionForMoveConstructor() ||
       !R->hasMoveConstructor()) {
@@ -6181,10 +6181,10 @@ static bool CheckTrivalMoveConstructor(Sema &S, CXXRecordDecl *R,
     Sema::SpecialMemberOverloadResult SMOR = S.LookupSpecialMember(
         R, Sema::CXXMoveConstructor, false, false, false, false, false);
 
-    return SMOR.getKind() != Sema::SpecialMemberOverloadResult::Success;
+    return SMOR.getKind() == Sema::SpecialMemberOverloadResult::Success;
   }
 
-  return !R->hasTrivialMoveConstructor();
+  return R->hasTrivialMoveConstructor();
 }
 
 /// Perform semantic checks on a class definition that has been
@@ -6473,7 +6473,7 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
     bool AlwaysUseLookup = Record->isPolymorphic() ||
                            Record->hasAttr<TriviallyRelocatableAttr>() ||
                            Record->hasAttr<MaybeTriviallyRelocatableAttr>();
-    if (CheckTrivalDestructor(*this, Record, AlwaysUseLookup)) {
+    if (!lookupTrivialDestructor(*this, Record, AlwaysUseLookup)) {
       Record->setIsNotNaturallyTriviallyRelocatable();
       if (Record->hasAttr<TriviallyRelocatableAttr>()) {
         Record->dropAttr<TriviallyRelocatableAttr>();
@@ -6486,7 +6486,7 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
       }
       if (Record->hasAttr<MaybeTriviallyRelocatableAttr>())
         Record->dropAttr<MaybeTriviallyRelocatableAttr>();
-    } else if (CheckTrivalMoveConstructor(*this, Record, AlwaysUseLookup)) {
+    } else if (!lookupTrivialMoveConstructor(*this, Record, AlwaysUseLookup)) {
       Record->setIsNotNaturallyTriviallyRelocatable();
       if (Record->hasAttr<TriviallyRelocatableAttr>()) {
         Record->dropAttr<TriviallyRelocatableAttr>();
