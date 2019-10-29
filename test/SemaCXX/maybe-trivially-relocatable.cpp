@@ -480,6 +480,19 @@ struct T24d : public T24 {
 T24d::T24d(const T24d&) = default;
 static_assert(!__is_trivially_relocatable(T24d), "its redefined copy constructor is not defaulted on first declaration");
 
+// Example that regressed with a version of Mark de Wever's patch.
+// T25 is analogous to unique_ptr; T25c is analogous to __compressed_pair.
+template<class T>
+struct [[clang::maybe_trivially_relocatable]] T25 {
+    T25(T25&&);
+};
+template<class T> struct T25b { T m_a; };
+template<class T> struct T25c : T25b<T> {};
+static_assert(__is_trivially_relocatable(T25<int>), "it has the attribute");
+static_assert(__is_trivially_relocatable(T25b<int>), "all its members are trivially relocatable");
+static_assert(__is_trivially_relocatable(T25c<int>), "all its bases are trivially relocatable");
+static_assert(__is_trivially_relocatable(T25b<T25<int>>), "all its members are trivially relocatable");
+static_assert(__is_trivially_relocatable(T25c<T25<int>>), "all its bases are trivially relocatable");
 
 // Example from D1144R0
 struct string {
