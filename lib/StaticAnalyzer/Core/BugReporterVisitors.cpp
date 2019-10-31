@@ -26,6 +26,7 @@
 #include "clang/Analysis/AnalysisDeclContext.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/CFGStmtMap.h"
+#include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Analysis/ProgramPoint.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/LLVM.h"
@@ -34,7 +35,6 @@
 #include "clang/Lex/Lexer.h"
 #include "clang/StaticAnalyzer/Core/AnalyzerOptions.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
-#include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CallEvent.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
@@ -308,9 +308,7 @@ PathDiagnosticPieceRef
 BugReporterVisitor::getDefaultEndPath(const BugReporterContext &BRC,
                                       const ExplodedNode *EndPathNode,
                                       const PathSensitiveBugReport &BR) {
-  PathDiagnosticLocation L =
-      PathDiagnosticLocation::createEndOfPath(EndPathNode);
-
+  PathDiagnosticLocation L = BR.getLocation();
   const auto &Ranges = BR.getRanges();
 
   // Only add the statement itself as a range if we didn't specify any
@@ -852,7 +850,7 @@ private:
   /// \return Source location of right hand side of an assignment
   /// into \c RegionOfInterest, empty optional if none found.
   Optional<SourceLocation> matchAssignment(const ExplodedNode *N) {
-    const Stmt *S = PathDiagnosticLocation::getStmt(N);
+    const Stmt *S = N->getStmtForDiagnostics();
     ProgramStateRef State = N->getState();
     auto *LCtx = N->getLocationContext();
     if (!S)
@@ -1420,14 +1418,19 @@ FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
     if (Optional<CallEnter> CE = Succ->getLocationAs<CallEnter>()) {
       if (const auto *VR = dyn_cast<VarRegion>(R)) {
 
-        const auto *Param = cast<ParmVarDecl>(VR->getDecl());
+        if (const auto *Param = dyn_cast<ParmVarDecl>(VR->getDecl())) {
+          ProgramStateManager &StateMgr = BRC.getStateManager();
+          CallEventManager &CallMgr = StateMgr.getCallEventManager();
 
-        ProgramStateManager &StateMgr = BRC.getStateManager();
-        CallEventManager &CallMgr = StateMgr.getCallEventManager();
-
-        CallEventRef<> Call = CallMgr.getCaller(CE->getCalleeContext(),
-                                                Succ->getState());
-        InitE = Call->getArgExpr(Param->getFunctionScopeIndex());
+          CallEventRef<> Call = CallMgr.getCaller(CE->getCalleeContext(),
+                                                  Succ->getState());
+          InitE = Call->getArgExpr(Param->getFunctionScopeIndex());
+        } else {
+          // Handle Objective-C 'self'.
+          assert(isa<ImplicitParamDecl>(VR->getDecl()));
+          InitE = cast<ObjCMessageExpr>(CE->getCalleeContext()->getCallSite())
+                      ->getInstanceReceiver()->IgnoreParenCasts();
+        }
         IsParam = true;
       }
     }
@@ -1440,6 +1443,7 @@ FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
 
   if (!StoreSite)
     return nullptr;
+
   Satisfied = true;
 
   // If we have an expression that provided the value, try to track where it
@@ -1804,7 +1808,7 @@ TrackControlDependencyCondBRVisitor::VisitNode(const ExplodedNode *N,
   if (ControlDeps.isControlDependent(OriginB, NB)) {
     // We don't really want to explain for range loops. Evidence suggests that
     // the only thing that leads to is the addition of calls to operator!=.
-    if (isa<CXXForRangeStmt>(NB->getTerminator()))
+    if (llvm::isa_and_nonnull<CXXForRangeStmt>(NB->getTerminatorStmt()))
       return nullptr;
 
     if (const Expr *Condition = NB->getLastCondition()) {
@@ -1919,7 +1923,7 @@ static const Expr *peelOffOuterExpr(const Expr *Ex,
 static const ExplodedNode* findNodeForExpression(const ExplodedNode *N,
                                                  const Expr *Inner) {
   while (N) {
-    if (PathDiagnosticLocation::getStmt(N) == Inner)
+    if (N->getStmtForDiagnostics() == Inner)
       return N;
     N = N->getFirstPred();
   }
@@ -2030,8 +2034,6 @@ bool bugreporter::trackExpressionValue(const ExplodedNode *InputNode,
 
   // Is it a symbolic value?
   if (auto L = V.getAs<loc::MemRegionVal>()) {
-    report.addVisitor(std::make_unique<UndefOrNullArgVisitor>(L->getRegion()));
-
     // FIXME: this is a hack for fixing a later crash when attempting to
     // dereference a void* pointer.
     // We should not try to dereference pointers at all when we don't care
@@ -2052,10 +2054,14 @@ bool bugreporter::trackExpressionValue(const ExplodedNode *InputNode,
     else if (CanDereference)
       RVal = LVState->getSVal(L->getRegion());
 
-    if (CanDereference)
+    if (CanDereference) {
+      report.addVisitor(
+          std::make_unique<UndefOrNullArgVisitor>(L->getRegion()));
+
       if (auto KV = RVal.getAs<KnownSVal>())
         report.addVisitor(std::make_unique<FindLastStoreBRVisitor>(
             *KV, L->getRegion(), EnableNullFPSuppression, TKind, SFC));
+    }
 
     const MemRegion *RegionRVal = RVal.getAsRegion();
     if (RegionRVal && isa<SymbolicRegion>(RegionRVal)) {

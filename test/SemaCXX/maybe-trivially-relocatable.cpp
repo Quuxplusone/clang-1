@@ -243,6 +243,9 @@ static_assert(!__is_trivially_relocatable(T7), "T7 has no implicitly declared mo
 struct T8 { virtual void f() {} int x; };
 static_assert(__is_trivially_relocatable(T8), "T8 has a vptr but that's fine");
 
+struct T8a { virtual void g() = 0; int x; };
+static_assert(__is_trivially_relocatable(T8a), "T8a is abstract but that's fine");
+
 struct [[clang::maybe_trivially_relocatable]] T9 { int x; T9(T9&&) {} };
 static_assert(__is_trivially_relocatable(T9), "T9 isn't naturally, but it has the attribute");
 
@@ -272,11 +275,11 @@ struct T12 {
 };
 static_assert(!__is_trivially_relocatable(T12), "not all fields have trivially relocatable types");
 
-struct T13 : T1, T2, T3, T4 {};
+struct T13 : T1, T2, T3, T4, T8, T8a {};
 static_assert(__is_trivially_relocatable(T13), "all bases have trivially relocatable types");
 
 struct T14 : T1, T6, T3, T4 {};
-static_assert(!__is_trivially_relocatable(T14), "all bases have trivially relocatable types");
+static_assert(!__is_trivially_relocatable(T14), "not all bases have trivially relocatable types");
 
 template<class... Ts>
 struct T15 : Ts... {};
@@ -448,6 +451,48 @@ static_assert(__is_trivially_relocatable(T23b::Evil), "it has no user-provided c
 static_assert(!__is_constructible(T23b, T23b&&), "");
 static_assert(!__is_trivially_relocatable(T23b), "because it is not move-constructible");
 
+
+// Verify that the attribute is not inappropriately inherited by derived classes.
+struct [[clang::maybe_trivially_relocatable]] T24 {
+    int i;
+    T24(int);
+    T24(const T24&);
+};
+static_assert(__is_trivially_relocatable(T24), "it has the attribute");
+struct T24a : public T24 {
+    using T24::T24;
+};
+static_assert(__is_trivially_relocatable(T24a), "all its bases are trivially relocatable");
+struct T24b : public T24 {
+    T24b(int i) : T24(i) {}
+    T24b(const T24b&);
+};
+static_assert(!__is_trivially_relocatable(T24b), "it redefines the copy constructor");
+struct T24c : public T24 {
+    T24c(int i) : T24(i) {}
+    T24c(const T24c&) = default;
+};
+static_assert(__is_trivially_relocatable(T24c), "its redefined copy constructor is merely defaulted");
+struct T24d : public T24 {
+    T24d(int i) : T24(i) {}
+    T24d(const T24d&);
+};
+T24d::T24d(const T24d&) = default;
+static_assert(!__is_trivially_relocatable(T24d), "its redefined copy constructor is not defaulted on first declaration");
+
+// Example that regressed with a version of Mark de Wever's patch.
+// T25 is analogous to unique_ptr; T25c is analogous to __compressed_pair.
+template<class T>
+struct [[clang::maybe_trivially_relocatable]] T25 {
+    T25(T25&&);
+};
+template<class T> struct T25b { T m_a; };
+template<class T> struct T25c : T25b<T> {};
+static_assert(__is_trivially_relocatable(T25<int>), "it has the attribute");
+static_assert(__is_trivially_relocatable(T25b<int>), "all its members are trivially relocatable");
+static_assert(__is_trivially_relocatable(T25c<int>), "all its bases are trivially relocatable");
+static_assert(__is_trivially_relocatable(T25b<T25<int>>), "all its members are trivially relocatable");
+static_assert(__is_trivially_relocatable(T25c<T25<int>>), "all its bases are trivially relocatable");
 
 // Example from D1144R0
 struct string {

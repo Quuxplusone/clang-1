@@ -722,9 +722,25 @@ def AVRSignal : InheritableAttr, TargetSpecificAttr<TargetAVR> {
 
 def AsmLabel : InheritableAttr {
   let Spellings = [Keyword<"asm">, Keyword<"__asm__">];
-  let Args = [StringArgument<"Label">];
+  let Args = [
+    // Label specifies the mangled name for the decl.
+    StringArgument<"Label">,
+
+    // IsLiteralLabel specifies whether the label is literal (i.e. suppresses
+    // the global C symbol prefix) or not. If not, the mangle-suppression prefix
+    // ('\01') is omitted from the decl name at the LLVM IR level.
+    //
+    // Non-literal labels are used by some external AST sources like LLDB.
+    BoolArgument<"IsLiteralLabel", /*optional=*/0, /*fake=*/1>
+  ];
   let SemaHandler = 0;
-  let Documentation = [Undocumented];
+  let Documentation = [AsmLabelDocs];
+  let AdditionalMembers =
+[{
+bool isEquivalent(AsmLabelAttr *Other) const {
+  return getLabel() == Other->getLabel() && getIsLiteralLabel() == Other->getIsLiteralLabel();
+}
+}];
 }
 
 def Availability : InheritableAttr {
@@ -2004,6 +2020,14 @@ def PragmaClangRodataSection : InheritableAttr {
   let Documentation = [Undocumented];
 }
 
+def PragmaClangRelroSection : InheritableAttr {
+  // This attribute has no spellings as it is only ever created implicitly.
+  let Spellings = [];
+  let Args = [StringArgument<"Name">];
+  let Subjects = SubjectList<[GlobalVar], ErrorDiag>;
+  let Documentation = [Undocumented];
+}
+
 def PragmaClangTextSection : InheritableAttr {
   // This attribute has no spellings as it is only ever created implicitly.
   let Spellings = [];
@@ -3058,7 +3082,7 @@ def LoopHint : Attr {
   }
 
   void printPrettyPragma(raw_ostream &OS, const PrintingPolicy &Policy) const {
-    unsigned SpellingIndex = getSpellingListIndex();
+    unsigned SpellingIndex = getAttributeSpellingListIndex();
     // For "#pragma unroll" and "#pragma nounroll" the string "unroll" or
     // "nounroll" is already emitted as the pragma name.
     if (SpellingIndex == Pragma_nounroll || SpellingIndex == Pragma_nounroll_and_jam)
@@ -3094,7 +3118,7 @@ def LoopHint : Attr {
 
   // Return a string suitable for identifying this attribute in diagnostics.
   std::string getDiagnosticName(const PrintingPolicy &Policy) const {
-    unsigned SpellingIndex = getSpellingListIndex();
+    unsigned SpellingIndex = getAttributeSpellingListIndex();
     if (SpellingIndex == Pragma_nounroll)
       return "#pragma nounroll";
     else if (SpellingIndex == Pragma_unroll)
@@ -3279,6 +3303,82 @@ def OMPAllocateDecl : InheritableAttr {
     ExprArgument<"Allocator">
   ];
   let Documentation = [Undocumented];
+}
+
+def OMPDeclareVariant : InheritableAttr {
+  let Spellings = [Pragma<"omp", "declare variant">];
+  let Subjects = SubjectList<[Function]>;
+  let SemaHandler = 0;
+  let HasCustomParsing = 1;
+  let InheritEvenIfAlreadyPresent = 1;
+  let Documentation = [OMPDeclareVariantDocs];
+  let Args = [
+    ExprArgument<"VariantFuncRef">,
+    ExprArgument<"Score">,
+    EnumArgument<"CtxSelectorSet", "CtxSelectorSetType",
+                 [ "", "implementation"
+                 ],
+                 [
+                   "CtxSetUnknown", "CtxSetImplementation"
+                 ]>,
+    EnumArgument<"CtxScore", "ScoreType",
+                 [ "", "score"
+                 ],
+                 [
+                   "ScoreUnknown", "ScoreSpecified"
+                 ]>,
+    EnumArgument<"CtxSelector", "CtxSelectorType",
+                 [ "", "vendor"
+                 ],
+                 [
+                   "CtxUnknown", "CtxVendor"
+                 ]>,
+    VariadicStringArgument<"ImplVendors">
+  ];
+  let AdditionalMembers = [{
+    void printScore(raw_ostream & OS, const PrintingPolicy &Policy) const {
+      if (const Expr *E = getScore()) {
+        OS << "score(";
+        E->printPretty(OS, nullptr, Policy);
+        OS << "):";
+      }
+    }
+    void printPrettyPragma(raw_ostream & OS, const PrintingPolicy &Policy)
+        const {
+      assert(getCtxSelectorSet() != CtxSetUnknown &&
+             getCtxSelector() != CtxUnknown && "Unknown context selector.");
+      if (const Expr *E = getVariantFuncRef()) {
+        OS << "(";
+        E->printPretty(OS, nullptr, Policy);
+        OS << ")";
+      }
+      // TODO: add printing of real context selectors.
+      OS << " match(";
+      switch (getCtxSelectorSet()) {
+      case CtxSetImplementation:
+        OS << "implementation={";
+        switch (getCtxSelector()) {
+        case CtxVendor:
+          OS << "vendor(";
+          printScore(OS, Policy);
+          if (implVendors_size() > 0) {
+            OS << *implVendors(). begin();
+            for (StringRef VendorName : llvm::drop_begin(implVendors(), 1))
+              OS << ", " << VendorName;
+          }
+          OS << ")";
+          break;
+        case CtxUnknown:
+          llvm_unreachable("Unknown context selector.");
+        }
+        OS << "}";
+        break;
+      case CtxSetUnknown:
+        llvm_unreachable("Unknown context selector set.");
+      }
+      OS << ")";
+    }
+  }];
 }
 
 def InternalLinkage : InheritableAttr {

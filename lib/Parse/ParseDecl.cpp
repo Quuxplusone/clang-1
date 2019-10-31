@@ -347,7 +347,7 @@ unsigned Parser::ParseAttributeArgsCommon(
     bool IsIdentifierArg = attributeHasIdentifierArg(*AttrName) ||
                            attributeHasVariadicIdentifierArg(*AttrName);
     ParsedAttr::Kind AttrKind =
-        ParsedAttr::getKind(AttrName, ScopeName, Syntax);
+        ParsedAttr::getParsedKind(AttrName, ScopeName, Syntax);
 
     // If we don't know how to parse this attribute, but this is the only
     // token in this argument, assume it's meant to be an identifier.
@@ -438,7 +438,7 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
   assert(Tok.is(tok::l_paren) && "Attribute arg list not starting with '('");
 
   ParsedAttr::Kind AttrKind =
-      ParsedAttr::getKind(AttrName, ScopeName, Syntax);
+      ParsedAttr::getParsedKind(AttrName, ScopeName, Syntax);
 
   if (AttrKind == ParsedAttr::AT_Availability) {
     ParseAvailabilityAttribute(*AttrName, AttrNameLoc, Attrs, EndLoc, ScopeName,
@@ -488,7 +488,7 @@ unsigned Parser::ParseClangAttributeArgs(
   assert(Tok.is(tok::l_paren) && "Attribute arg list not starting with '('");
 
   ParsedAttr::Kind AttrKind =
-      ParsedAttr::getKind(AttrName, ScopeName, Syntax);
+      ParsedAttr::getParsedKind(AttrName, ScopeName, Syntax);
 
   switch (AttrKind) {
   default:
@@ -1689,9 +1689,9 @@ void Parser::ProhibitCXX11Attributes(ParsedAttributesWithRange &Attrs,
     if (!AL.isCXX11Attribute() && !AL.isC2xAttribute())
       continue;
     if (AL.getKind() == ParsedAttr::UnknownAttribute)
-      Diag(AL.getLoc(), diag::warn_unknown_attribute_ignored) << AL.getName();
+      Diag(AL.getLoc(), diag::warn_unknown_attribute_ignored) << AL;
     else {
-      Diag(AL.getLoc(), DiagID) << AL.getName();
+      Diag(AL.getLoc(), DiagID) << AL;
       AL.setInvalid();
     }
   }
@@ -2100,6 +2100,8 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
     bool IsForRangeLoop = false;
     if (TryConsumeToken(tok::colon, FRI->ColonLoc)) {
       IsForRangeLoop = true;
+      if (getLangOpts().OpenMP)
+        Actions.startOpenMPCXXRangeFor();
       if (Tok.is(tok::l_brace))
         FRI->RangeExpr = ParseBraceInitializer();
       else
@@ -2927,28 +2929,29 @@ Parser::DiagnoseMissingSemiAfterTagDefinition(DeclSpec &DS, AccessSpecifier AS,
       IdentifierInfo *Name = AfterScope.getIdentifierInfo();
       Sema::NameClassification Classification = Actions.ClassifyName(
           getCurScope(), SS, Name, AfterScope.getLocation(), Next,
-          /*IsAddressOfOperand=*/false, /*CCC=*/nullptr);
+          /*CCC=*/nullptr);
       switch (Classification.getKind()) {
       case Sema::NC_Error:
         SkipMalformedDecl();
         return true;
 
       case Sema::NC_Keyword:
-      case Sema::NC_NestedNameSpecifier:
-        llvm_unreachable("typo correction and nested name specifiers not "
-                         "possible here");
+        llvm_unreachable("typo correction is not possible here");
 
       case Sema::NC_Type:
       case Sema::NC_TypeTemplate:
+      case Sema::NC_UndeclaredNonType:
+      case Sema::NC_UndeclaredTemplate:
         // Not a previously-declared non-type entity.
         MightBeDeclarator = false;
         break;
 
       case Sema::NC_Unknown:
-      case Sema::NC_Expression:
+      case Sema::NC_NonType:
+      case Sema::NC_DependentNonType:
+      case Sema::NC_ContextIndependentExpr:
       case Sema::NC_VarTemplate:
       case Sema::NC_FunctionTemplate:
-      case Sema::NC_UndeclaredTemplate:
         // Might be a redeclaration of a prior entity.
         break;
       }
@@ -4678,8 +4681,10 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
     ExprResult AssignedVal;
     EnumAvailabilityDiags.emplace_back(*this);
 
+    EnterExpressionEvaluationContext ConstantEvaluated(
+        Actions, Sema::ExpressionEvaluationContext::ConstantEvaluated);
     if (TryConsumeToken(tok::equal, EqualLoc)) {
-      AssignedVal = ParseConstantExpression();
+      AssignedVal = ParseConstantExpressionInExprEvalContext();
       if (AssignedVal.isInvalid())
         SkipUntil(tok::comma, tok::r_brace, StopBeforeMatch);
     }

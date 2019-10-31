@@ -113,8 +113,10 @@ private:
   const ExplodedNode *getAllocationNode(const ExplodedNode *N, SymbolRef Sym,
                                         CheckerContext &C) const;
 
-  std::unique_ptr<BugReport> generateAllocatedDataNotReleasedReport(
-      const AllocationPair &AP, ExplodedNode *N, CheckerContext &C) const;
+  std::unique_ptr<PathSensitiveBugReport>
+  generateAllocatedDataNotReleasedReport(const AllocationPair &AP,
+                                         ExplodedNode *N,
+                                         CheckerContext &C) const;
 
   /// Mark an AllocationPair interesting for diagnostic reporting.
   void markInteresting(PathSensitiveBugReport *R,
@@ -467,7 +469,7 @@ MacOSKeychainAPIChecker::getAllocationNode(const ExplodedNode *N,
   return AllocNode;
 }
 
-std::unique_ptr<BugReport>
+std::unique_ptr<PathSensitiveBugReport>
 MacOSKeychainAPIChecker::generateAllocatedDataNotReleasedReport(
     const AllocationPair &AP, ExplodedNode *N, CheckerContext &C) const {
   const ADFunctionInfo &FI = FunctionsToTrack[AP.second->AllocatorIdx];
@@ -482,7 +484,7 @@ MacOSKeychainAPIChecker::generateAllocatedDataNotReleasedReport(
   // allocated, and only report a single path.
   PathDiagnosticLocation LocUsedForUniqueing;
   const ExplodedNode *AllocNode = getAllocationNode(N, AP.first, C);
-  const Stmt *AllocStmt = PathDiagnosticLocation::getStmt(AllocNode);
+  const Stmt *AllocStmt = AllocNode->getStmtForDiagnostics();
 
   if (AllocStmt)
     LocUsedForUniqueing = PathDiagnosticLocation::createBegin(AllocStmt,
