@@ -6176,6 +6176,7 @@ static bool lookupTrivialMoveConstructor(Sema &S, CXXRecordDecl *R,
                                          bool AlwaysUseLookup) {
   if (AlwaysUseLookup || R->hasUserDeclaredMoveConstructor() ||
       R->needsOverloadResolutionForMoveConstructor() ||
+      (R->needsImplicitMoveConstructor() && !R->hasTrivialMoveConstructor()) ||
       !R->hasMoveConstructor()) {
 
     Sema::SpecialMemberOverloadResult SMOR = S.LookupSpecialMember(
