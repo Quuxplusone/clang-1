@@ -298,6 +298,14 @@ static_assert(__is_trivially_relocatable(T17), "");
 static_assert(__is_trivially_relocatable(T15<T17>), "");
 static_assert(__is_trivially_relocatable(T16<T17>), "");
 
+struct T17a : T15<T9> {};  // T9 is trivially relocatable
+static_assert(__is_trivially_relocatable(T17a), "");
+static_assert(__is_trivially_relocatable(T15<T17a>), "");
+static_assert(__is_trivially_relocatable(T16<T17a>), "");
+
+static_assert(__is_trivially_relocatable(T15<T17, T17a>), "");
+static_assert(__is_trivially_relocatable(T16<T17, T17a>), "");
+
 struct T18 : T15<T12> {};  // T12 is not trivially relocatable
 static_assert(!__is_trivially_relocatable(T18), "");
 static_assert(!__is_trivially_relocatable(T15<T18>), "");
